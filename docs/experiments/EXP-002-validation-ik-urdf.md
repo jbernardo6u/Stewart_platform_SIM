@@ -83,6 +83,5 @@ Les scripts de `legacy/` qui combinent l'IK `src` avec l'ordre historique (`lega
 
 ## Travaux restants
 
-- **Phase 4** : lever le blocage cinématique du mécanisme simulé (réviser la fermeture de boucle : contraintes point-à-point `JOINT_POINT2POINT` aux centres des cardans plutôt que `JOINT_FIXED`), puis refaire l'essai dynamique avec un critère quantitatif (erreur de pose < 0,5 mm / 0,1°).
-- **Phase 1** : extraire les centres exacts des cardans de la base, dont les rayons sont dispersés entre 0,175 et 0,224 m selon l'axe considéré, et quantifier l'écart au modèle paramétrique (EXP-001).
-- Clarifier la hauteur neutre. Les repères URDF (attaches plateforme à z ≈ 0,358 m, premiers axes des cardans à z ≈ 0,065 m) ne se comparent pas directement à home = 0,2575 m, alors que l'inclinaison des jambes est cohérente (25,6° dans le modèle, 25,3° à 25,9° dans le URDF). Les centres de cardans restent à définir proprement (Phase 1).
+- ✅ **Blocage dynamique résolu** dans [EXP-004](EXP-004-simulation-boucle-fermee.md). L'hypothèse d'une surcontrainte émise ici était fausse : les causes étaient la butée basse des vérins à la pose neutre et des limites articulaires [0 ; 2π] parasites. Erreur de pose finale : 0,28 mm / 0,044°.
+- ✅ **Centres de cardans et hauteur neutre** identifiés dans [EXP-001](EXP-001-geometrie-urdf.md) : r = 0,19958 m, γ = 12,295°, h = 0,253489 m. La dispersion 0,175 à 0,224 m citée plus haut venait de l'utilisation des origines de repères au lieu des intersections d'axes.

@@ -73,20 +73,28 @@ flowchart TB
 | Maillages STL (51) | `simulation/meshes/` | ✅ Existant |
 | Graphe des liens | `simulation/urdf/Link_graph.txt` | ✅ Existant |
 | CAO source | `models/geometry/cad/Stewart_CAD.f3d` | ✅ Existant |
-| Adaptateur PyBullet | `src/core/platform.py`, `src/simulation/pybullet_sim.py` | ⚠️ Deux wrappers concurrents ; fermeture de boucle manquante dans `src` (A3) ; même fermée, la boucle se bloque hors de l'axe z (EXP-002) |
+| Adaptateur PyBullet | `src/core/platform.py::StewartPlatform` | ✅ Boucle fermée validée : **0,28 mm / 0,044°** avec gravité, 8 µm sans ([EXP-004](docs/experiments/EXP-004-simulation-boucle-fermee.md)) |
+| Ancien adaptateur | `src/simulation/pybullet_sim.py::PyBulletSimulator` | ⚠️ Sans fermeture de boucle : à fusionner dans `StewartPlatform` |
+| Identification géométrique | `src/simulation/urdf_geometry.py` | ✅ Centres des cardans extraits du URDF (EXP-001) |
 | Gazebo, mondes, launch | `simulation/gazebo/`, `simulation/worlds/`, `simulation/launch/` | ⬜ À créer (Phase 4) |
 | Visualisation | `src/gui/`, `src/simulation/matplotlib_viz.py`, `scripts/create_web_viz.py` | ✅ Existant, à découpler du modèle |
 
-**Fermeture de boucle** : l'URDF est un arbre. Cinq jambes sont fermées à l'exécution par des contraintes `JOINT_FIXED` entre les paires `joint_indices = [(6,16), (35,17), (49,18), (42,19), (28,20)]`, et la 6e est fermée par l'arbre lui-même. Les vérins sont les joints prismatiques `Slider_13` à `Slider_18` = jambes 1 à 6, soit `DEFAULT_ACTUATOR_INDICES = [2, 31, 45, 38, 24, 9]` (`src/core/platform.py`), dans l'ordre des sorties de l'IK. Cette correspondance est validée à 0,4° près par [EXP-002](docs/experiments/EXP-002-validation-ik-urdf.md). L'ancien ordre `[9, 2, 31, 45, 38, 24]` n'était valable qu'avec l'IK historique. Sous Gazebo, cette fermeture devra passer par SDF (`<joint>` en boucle) ou par un plugin.
+**Fermeture de boucle** : l'URDF est un arbre et chaque jambe une chaîne U-P-R-U à 6 degrés de liberté (cardans idéaux, EXP-001). Cinq jambes sont fermées à l'exécution par des contraintes `JOINT_FIXED` **ancrées sur la pose relative des liens en configuration zéro** (les repères de contrainte PyBullet sont relatifs au centre de masse), entre les paires `joint_indices = [(6,16), (35,17), (49,18), (42,19), (28,20)]`, et la 6e est fermée par l'arbre lui-même. Les vérins sont les joints prismatiques `Slider_13` à `Slider_18` = jambes 1 à 6, soit `DEFAULT_ACTUATOR_INDICES = [2, 31, 45, 38, 24, 9]` (`src/core/platform.py`), dans l'ordre des sorties de l'IK. Cette correspondance est validée à 0,4° près par [EXP-002](docs/experiments/EXP-002-validation-ik-urdf.md). L'ancien ordre `[9, 2, 31, 45, 38, 24]` n'était valable qu'avec l'IK historique. Sous Gazebo, cette fermeture devra passer par SDF (`<joint>` en boucle) ou par un plugin.
+
+**Pièges du modèle URDF** (EXP-004) :
+
+- la configuration zéro correspond aux **vérins en butée basse** (course [0 ; 0,19] m) : travailler autour de `DEFAULT_WORKING_HEIGHT = 0,09 m` (`move_to_working_position()`) ;
+- 11 articulations passives ont des limites **[0 ; 2π]** (export Fusion 360) qui bloquent le mécanisme. `setup_constraints()` les recentre sur [−π ; π].
 
 ## Niveau 2 : Géométrie
 
 | Élément | Valeur actuelle | Source |
 |---|---|---|
-| Rayon base `r_B` | 0,2 m | `configurations/platform_config.yaml` |
-| Rayon plateforme `r_P` | 0,2 m | idem |
-| Demi-angles `γ_B`, `γ_P` | 12° | idem |
-| Hauteur neutre | 0,257547 m | en dur dans `src/core/kinematics.py:51` (à migrer) |
+| Rayon base `r_B` | 0,2 m (modèle) · **0,19958 m** (URDF) | `configurations/platform_config.yaml` (`platform`, `platform.identified`) |
+| Rayon plateforme `r_P` | 0,2 m · **0,19958 m** | idem |
+| Demi-angles `γ_B`, `γ_P` | 12° · **12,295°** (γ_P : 12,19 à 12,40°) | idem |
+| Hauteur neutre | 0,257547 m (en dur dans `src/core/kinematics.py`) · **(−1,17 ; 0,42 ; 253,489) mm** | idem |
+| Géométrie de référence | points d'attache identifiés (écart au modèle paramétrique : 0,8 à 1,6 mm) | `InverseKinematics.from_attachment_points`, `StewartPlatform.from_urdf` ([EXP-001](docs/experiments/EXP-001-geometrie-urdf.md)) |
 | Points d'attache | `B_i = r_B [cos φ_Bi, sin φ_Bi, 0]ᵀ`, `φ_B = {7π/6 ± γ_B, π/2 ± γ_B, 11π/6 ± γ_B}` | `InverseKinematics.calculate_attachment_points` |
 
 **Repères (à formaliser en Phase 1)** :
@@ -103,7 +111,7 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 
 | Fonction | Emplacement | État |
 |---|---|---|
-| Cinématique inverse | `src/core/kinematics.py::InverseKinematics` | ✅ Implémentée et **validée contre le URDF** (EXP-002). L'IK d'origine décrivait le mécanisme tourné de −60° |
+| Cinématique inverse | `src/core/kinematics.py::InverseKinematics` | ✅ Implémentée et **validée contre le URDF** (EXP-002). L'IK d'origine décrivait le mécanisme tourné de −60°. Deux géométries : paramétrique (r, γ) ou points identifiés (`from_attachment_points`) |
 | Cinématique directe (Newton-Raphson sur les 6 longueurs) | `models/kinematics/` | ⬜ À créer |
 | Jacobien, singularités, conditionnement | `models/kinematics/` | ⬜ À créer |
 | Espace de travail | `models/kinematics/` | ⬜ À créer |
@@ -137,11 +145,11 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 | Élément | Emplacement | État |
 |---|---|---|
 | Mesures | `datasets/` | ⬜ Aucune donnée réelle |
-| Tests unitaires | `tests/unit_tests/` | ✅ 12 tests (IK, paramètres de la plateforme physique) |
+| Tests unitaires | `tests/unit_tests/` | ✅ 16 tests (IK paramétrique et à points identifiés, plateforme physique) |
 | Tests d'intégration | `tests/integration_tests/` | ⚠️ Scripts hérités ; 2 imports cassés, 1 nécessite un affichage |
-| Tests de validation | `tests/validation_tests/` | 🟡 IK contre URDF (EXP-002) ; simulation contre réel à venir |
+| Tests de validation | `tests/validation_tests/` | 🟡 12 tests : IK contre URDF (EXP-002), géométrie (EXP-001), suivi en boucle fermée (EXP-004) ; simulation contre réel à venir |
 | Analyse d'erreur | `results/`, `docs/validation/` | ⬜ |
-| Traçabilité CIR | `docs/experiments/` | ✅ Gabarit + EXP-002 |
+| Traçabilité CIR | `docs/experiments/` | ✅ Gabarit + EXP-001, EXP-002, EXP-004 |
 
 ## Dépendances des modules
 

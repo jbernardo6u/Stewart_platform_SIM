@@ -53,7 +53,9 @@ Toujours documenter les nouvelles fonctionnalités.
 ```bash
 pip install -r requirements-dev.txt                   # dépendances + pytest + jupyterlab
 python3 -m pytest tests/unit_tests tests/validation_tests   # tests sans GUI (PyBullet en mode DIRECT)
-python3 scripts/experiments/exp002_ik_vs_urdf.py      # rejoue EXP-002 → results/kinematics/
+python3 scripts/experiments/exp001_urdf_geometry.py   # EXP-001 → results/geometry/
+python3 scripts/experiments/exp002_ik_vs_urdf.py      # EXP-002 → results/kinematics/
+python3 scripts/experiments/exp004_closed_loop_tracking.py  # EXP-004 → results/experiments/
 python3 run_simulation.py                             # menu de lancement
 python3 scripts/system_check.py                       # diagnostic de l'environnement
 ```
@@ -65,7 +67,9 @@ python3 scripts/system_check.py                       # diagnostic de l'environn
 Voir `docs/reports/2026-09-24_analyse_depot.md`, section « Dette technique ». En priorité :
 
 - ~~A1~~ **résolu** (EXP-002) : l'IK `src` est validée contre le URDF. Utiliser `DEFAULT_ACTUATOR_INDICES` (`src/core/platform.py`), jamais l'ancien `[9, 2, 31, 45, 38, 24]` (qui n'est valable qu'avec `legacy/inv_kinematics.py`).
-- **Simulation bloquée hors de l'axe z** (EXP-002) : les résultats dynamiques PyBullet ne sont pas quantitativement exploitables tant que la Phase 4 n'a pas traité ce point.
+- **Simulation** : utiliser `StewartPlatform.from_urdf(...)` (géométrie identifiée, EXP-001), puis `move_to_working_position()` avant tout mouvement. La pose neutre de l'IK est en **butée basse des vérins**, donc toute consigne doit être exprimée autour de `DEFAULT_WORKING_HEIGHT`. Précision validée : 0,28 mm / 0,044° (EXP-004).
+- Ne pas retirer le recentrage des limites [0 ; 2π] dans `setup_constraints()` : sans lui, le mécanisme se bloque.
+- `PyBulletSimulator` (`src/simulation/pybullet_sim.py`) n'a pas la fermeture de boucle : ne pas l'utiliser pour des résultats quantitatifs.
 - **A3** : `src/core/platform.py` ne crée pas les contraintes de fermeture de boucle.
 - **A5** : les fonctions « pose courante » renvoient la pose de la base, pas celle de la plateforme.
 

@@ -158,24 +158,23 @@ def demonstrate_trajectory(trajectory_type: str = 'ellipse', use_simulation: boo
     if use_simulation:
         print("🚀 Lancement de la simulation PyBullet...")
         try:
-            from src.core.platform import StewartPlatform, DEFAULT_JOINT_INDICES, DEFAULT_ACTUATOR_INDICES
+            from src.core.platform import StewartPlatform, DEFAULT_WORKING_HEIGHT
             
-            # Configuration de la plateforme
+            # Plateforme dont l'IK utilise la géométrie identifiée dans le URDF (EXP-001)
             urdf_path = "simulation/urdf/Stewart.urdf"
-            joint_indices = DEFAULT_JOINT_INDICES
-            actuator_indices = DEFAULT_ACTUATOR_INDICES
-            
-            # Créer et initialiser la plateforme
-            platform = StewartPlatform(urdf_path, joint_indices, actuator_indices, design_variables)
+            platform = StewartPlatform.from_urdf(urdf_path)
             
             if platform.setup_environment(use_gui=True):
                 if platform.initialize_platform():
                     print("✅ Plateforme initialisée, exécution de la trajectoire...")
                     
-                    # Exécuter la trajectoire
+                    # Les vérins sont en butée basse à la pose neutre : monter à mi-course
+                    platform.move_to_working_position()
+                    
+                    # Exécuter la trajectoire autour de la hauteur de travail
                     for i, (trans, rot) in enumerate(zip(translations, rotations)):
                         print(f"📍 Point {i+1}/{len(translations)}")
-                        platform.move_to_pose(trans, rot, duration=0.5)
+                        platform.move_to_pose(np.asarray(trans) + [0, 0, DEFAULT_WORKING_HEIGHT], rot, duration=0.5)
                     
                     print("✅ Trajectoire terminée")
                     input("Appuyez sur Entrée pour fermer...")

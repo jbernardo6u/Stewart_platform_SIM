@@ -16,5 +16,7 @@ Règles :
 
 | Id | Titre | Phase | Verrou | Statut |
 |---|---|---|---|---|
-| EXP-001 | Géométrie paramétrique contre URDF | 1 | V-1 | Planifiée |
-| [EXP-002](EXP-002-validation-ik-urdf.md) | Validation de l'IK contre le URDF (arbitrage A1) | 2 | V-2, V-7, V-8 | ✅ Terminée : H1 validée ; blocage dynamique ouvert (Phase 4) |
+| [EXP-001](EXP-001-geometrie-urdf.md) | Géométrie réelle du URDF contre modèle paramétrique | 1 | V-1, V-7 | ✅ Terminée : écart de 0,8 à 1,6 mm ; géométrie identifiée adoptée |
+| [EXP-002](EXP-002-validation-ik-urdf.md) | Validation de l'IK contre le URDF (arbitrage A1) | 2 | V-2, V-7, V-8 | ✅ Terminée : H1 validée |
+| [EXP-004](EXP-004-simulation-boucle-fermee.md) | Déblocage et validation de la simulation en boucle fermée | 4 | V-7, V-8 | ✅ Terminée : 0,28 mm / 0,044° |
+| EXP-005 | Même trajectoire sous PyBullet et Gazebo | 4 | V-7, V-8 | Planifiée |

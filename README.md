@@ -20,14 +20,14 @@ Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la 
 
 | Niveau | État |
 |---|---|
-| 1 · Simulation | 🟡 PyBullet + URDF opérationnels ; ⚠️ boucle fermée bloquée hors de l'axe z (EXP-002) ; Gazebo/ROS2 à créer |
-| 2 · Géométrie | 🟡 Modèle paramétrique cohérent avec le URDF (0,4°) ; repères à formaliser |
+| 1 · Simulation | ✅ PyBullet en boucle fermée **validé : 0,28 mm / 0,044°** (EXP-004) ; Gazebo/ROS2 à créer |
+| 2 · Géométrie | ✅ Géométrie réelle identifiée dans le URDF (EXP-001) ; repères à formaliser |
 | 3 · Cinématique | 🟡 IK **validée contre le URDF** (EXP-002) ; FK et jacobien à créer |
 | 4 · Dynamique | ⬜ À créer |
 | 5 · Contrôle | 🟡 Trajectoires géométriques, commande en position basique |
-| 6 · Validation | 🟡 14 tests automatisés (unitaires + cohérence IK/URDF) ; aucune mesure réelle |
+| 6 · Validation | 🟡 28 tests automatisés (16 unitaires, 12 de validation modèle/URDF/simulation) ; aucune mesure réelle |
 
-Phase en cours : **0 (assainissement)**, et **2 (cinématique)** entamée. Détail : [ROADMAP.md](ROADMAP.md).
+Phases en cours : **1 (géométrie)**, **2 (cinématique)** et **4 (simulation)**, déjà bien avancées. Détail : [ROADMAP.md](ROADMAP.md).
 
 ## Avancement
 
@@ -37,9 +37,16 @@ Phase en cours : **0 (assainissement)**, et **2 (cinématique)** entamée. Déta
 | 2026-09-24 | Restructuration du dépôt en jumeau numérique (simulation / modèles / contrôle / validation / docs), sans rupture d'API | [rapport de restructuration](docs/reports/2026-09-24_restructuration.md), [ADR-0001](docs/decisions/ADR-0001-conserver-package-src.md) |
 | 2026-09-24 | Architecture cible, roadmap en 8 phases, verrous scientifiques, gabarit d'expérimentation CIR | [ARCHITECTURE.md](ARCHITECTURE.md), [ROADMAP.md](ROADMAP.md), [RESEARCH.md](RESEARCH.md) |
 | 2026-09-24 | **EXP-002** : l'IK `src` est la bonne (écart de 0,4° avec les vérins du URDF). Correction de l'ordre des actionneurs (`[2, 31, 45, 38, 24, 9]`) : l'ancien ordre envoyait à chaque vérin la consigne d'une autre jambe | [EXP-002](docs/experiments/EXP-002-validation-ik-urdf.md) |
-| 2026-09-24 | Dépendances réduites aux 4 paquets réellement utilisés ; tests au vert (14/14) | [CHANGELOG.md](CHANGELOG.md) |
+| 2026-09-24 | Dépendances réduites aux 4 paquets réellement utilisés | [CHANGELOG.md](CHANGELOG.md) |
+| 2026-09-24 | **EXP-001** : le URDF est un mécanisme 6-UPU exact ; points d'attache réels identifiés (r = 0,19958 m, γ = 12,295°, h = 0,2535 m), écart de 0,8 à 1,6 mm au modèle paramétrique | [EXP-001](docs/experiments/EXP-001-geometrie-urdf.md) |
+| 2026-09-24 | **EXP-004** : simulation en boucle fermée débloquée. Deux causes : pose neutre en butée basse des vérins, et limites articulaires [0 ; 2π] parasites de l'export CAO. Suivi de pose : **0,28 mm / 0,044°** avec gravité, **8 µm** sans | [EXP-004](docs/experiments/EXP-004-simulation-boucle-fermee.md) |
 
-**Limites connues** : la simulation PyBullet en boucle fermée ne suit correctement que les mouvements en z. Pour les autres axes, les vérins restent jusqu'à 18 mm en deçà de leur consigne. Les résultats dynamiques ne sont donc pas encore exploitables quantitativement (Phase 4).
+**Limites connues** :
+
+- la pose neutre de l'IK correspond aux vérins en butée basse : tout mouvement se fait autour de la hauteur de travail (0,09 m) ;
+- avec gravité, la simulation garde ~0,2 à 0,3 mm d'erreur, due à la souplesse des contraintes PyBullet ;
+- la démo `ellipse` du générateur de trajectoires demande un lacet de 360°, irréalisable ;
+- `PyBulletSimulator` (GUI PyBullet) n'a pas encore la fermeture de boucle.
 
 ## Structure
 
@@ -104,16 +111,20 @@ leg_lengths = ik.solve(translation=[0.01, 0, 0], rotation=[0, 0, 15])  # m, degr
 ```
 
 ```python
-from src.core.platform import StewartPlatform, DEFAULT_JOINT_INDICES, DEFAULT_ACTUATOR_INDICES
+from src.core.platform import StewartPlatform, DEFAULT_WORKING_HEIGHT
 
-platform = StewartPlatform("simulation/urdf/Stewart.urdf",
-                           joint_indices=DEFAULT_JOINT_INDICES,          # fermeture des boucles
-                           actuator_indices=DEFAULT_ACTUATOR_INDICES,    # [2, 31, 45, 38, 24, 9] = jambes 1..6
-                           design_variables=[0.2, 0.2, 12, 12])          # [r_P, r_B, γ_P, γ_B]
+platform = StewartPlatform.from_urdf("simulation/urdf/Stewart.urdf")  # IK sur la géométrie identifiée
 platform.setup_environment(use_gui=True)
-platform.initialize_platform()
-platform.move_to_pose(translation=[0, 0, 0.01], rotation=[5, 0, 0])
+platform.initialize_platform()           # base fixe, boucles fermées, limites recentrées
+platform.move_to_working_position()      # vérins à mi-course (la pose neutre est en butée basse)
+
+platform.move_to_pose(translation=[0.01, 0, DEFAULT_WORKING_HEIGHT], rotation=[5, 0, 0])
+position, rotation = platform.get_current_pose()   # pose mesurée, même repère que la consigne
 ```
+
+Le constructeur historique reste disponible (modèle paramétrique, précision ~1 mm) :
+`StewartPlatform(urdf, DEFAULT_JOINT_INDICES, DEFAULT_ACTUATOR_INDICES, [0.2, 0.2, 12, 12])`.
+Options de mouvement : `move_to_pose(..., realtime=False, settle_time=1.0)` pour calculer sans attendre (tests, batch).
 
 ```python
 from src.core.trajectory import generate_demo_trajectory
@@ -130,13 +141,13 @@ Note : ce fichier n'est pas encore lu par le code (Phase 1).
 ## Tests
 
 ```bash
-python3 -m pytest tests/unit_tests tests/validation_tests   # 14 tests, sans affichage (PyBullet DIRECT)
+python3 -m pytest tests/unit_tests tests/validation_tests   # 28 tests, ~15 s, sans affichage (PyBullet DIRECT)
 ```
 
 | Suite | Contenu |
 |---|---|
-| `unit_tests` | IK (11 tests), paramètres de `PhysicalStewartPlatform` |
-| `validation_tests` | Cohérence IK ↔ URDF : axe de chaque vérin à moins de 1° de la jambe du modèle (EXP-002) |
+| `unit_tests` (16) | IK paramétrique et à points identifiés, paramètres de `PhysicalStewartPlatform` |
+| `validation_tests` (12) | Axes des vérins vs jambes du modèle (EXP-002) ; géométrie URDF (EXP-001) ; suivi de pose en boucle fermée < 0,5 mm / 0,1° (EXP-004) |
 | `integration_tests` | Scripts hérités, manuels (PyBullet GUI, anciens imports) |
 
 ## Expérimentations
@@ -144,7 +155,9 @@ python3 -m pytest tests/unit_tests tests/validation_tests   # 14 tests, sans aff
 Chaque résultat est tracé par une fiche dans [docs/experiments/](docs/experiments/README.md) (format CIR : contexte, verrou, hypothèse, méthodologie, résultats, analyse, conclusion).
 
 ```bash
-python3 scripts/experiments/exp002_ik_vs_urdf.py   # rejoue EXP-002 → results/kinematics/exp002_*.csv
+python3 scripts/experiments/exp001_urdf_geometry.py          # EXP-001 → results/geometry/
+python3 scripts/experiments/exp002_ik_vs_urdf.py             # EXP-002 → results/kinematics/
+python3 scripts/experiments/exp004_closed_loop_tracking.py   # EXP-004 → results/experiments/
 ```
 
 Détails et limites connues : [tests/README.md](tests/README.md).

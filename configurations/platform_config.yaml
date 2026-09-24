@@ -13,6 +13,21 @@ platform:
   
   # Position de référence
   home_position: [0, 0, 0.257547]  # Position neutre [x, y, z]
+
+  # Géométrie réelle identifiée dans simulation/urdf/Stewart.urdf (EXP-001).
+  # Utilisée par StewartPlatform.from_urdf() ; le modèle paramétrique ci-dessus
+  # s'en écarte de 0,8 à 1,6 mm par point d'attache.
+  identified:
+    radius_base: 0.19958
+    radius_platform: 0.19958
+    gamma_base: 12.295
+    gamma_platform: 12.295          # ±0,2° selon la jambe (plateforme non strictement symétrique)
+    home_position: [-0.001169, 0.000420, 0.253489]
+    platform_z_spread_mm: 1.075     # attaches plateforme non coplanaires
+
+  # Vérins : course [0, 0.19] m ; pose neutre = butée basse.
+  # Travailler autour de la hauteur de travail (mi-course).
+  working_height: 0.09
   
   # Limites de mouvement
   limits:

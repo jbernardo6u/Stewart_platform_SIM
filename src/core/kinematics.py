@@ -54,6 +54,33 @@ class InverseKinematics:
         self.B = None  # Points d'attache base
         self.P = None  # Points d'attache plateforme
         self.L = None  # Positions des vérins
+
+        # Points d'attache imposés (géométrie identifiée), sinon modèle paramétrique (r, γ)
+        self._custom_points: Union[Tuple[np.ndarray, np.ndarray], None] = None
+
+    @classmethod
+    def from_attachment_points(cls, base_points: np.ndarray, platform_points: np.ndarray,
+                               home_position: Union[List[float], np.ndarray]) -> "InverseKinematics":
+        """
+        Crée une IK à partir de points d'attache mesurés ou identifiés (EXP-001).
+
+        Args:
+            base_points: Attaches de la base (3x6), repère base, jambes 1 à 6
+            platform_points: Attaches de la plateforme (3x6), repère plateforme centré
+                             sur son centre de rotation, jambes 1 à 6
+            home_position: Position du centre de la plateforme dans le repère base, à la pose neutre
+
+        Les attributs rb, rp, gamma_B, gamma_P valent alors les moyennes des points
+        (information seulement ; seuls les points sont utilisés par solve()).
+        """
+        B = np.asarray(base_points, dtype=float)
+        P = np.asarray(platform_points, dtype=float)
+        if B.shape != (3, 6) or P.shape != (3, 6):
+            raise ValueError("base_points et platform_points doivent être de forme (3, 6)")
+        ik = cls(float(np.linalg.norm(B[:2], axis=0).mean()), float(np.linalg.norm(P[:2], axis=0).mean()), 0.0, 0.0)
+        ik.home_pos = np.asarray(home_position, dtype=float)
+        ik._custom_points = (P.copy(), B.copy())
+        return ik
         
     def calculate_attachment_points(self) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -64,6 +91,9 @@ class InverseKinematics:
                 - P: Points d'attache sur la plateforme (3x6)
                 - B: Points d'attache sur la base (3x6)
         """
+        if self._custom_points is not None:
+            P, B = self._custom_points
+            return P.copy(), B.copy()
         pi = np.pi
         
         # Angles polaires pour la base
@@ -179,7 +209,7 @@ class InverseKinematics:
         R_y = self.rotation_matrix_y(pitch)
         R_z = self.rotation_matrix_z(yaw)
         
-        # Ordre de rotation: R = R_z * R_y * R_x
+        # Ordre de rotation : R = R_x · R_y · R_z (rotations intrinsèques roulis → tangage → lacet)
         return np.matmul(np.matmul(R_x, R_y), R_z)
     
     def solve(self, translation: Union[List[float], np.ndarray], 
@@ -226,10 +256,10 @@ class InverseKinematics:
         
         Args:
             pose: Position and rotation [x, y, z, roll, pitch, yaw]
-                 Position in mm, rotation in radians
+                 Position en mètres, rotation en degrés (mêmes unités que solve())
         
         Returns:
-            Array of 6 leg lengths in mm
+            Array of 6 leg lengths (mètres)
         """
         if len(pose) >= 6:
             return self.solve(pose[:3], pose[3:6])

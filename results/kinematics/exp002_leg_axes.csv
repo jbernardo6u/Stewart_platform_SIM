@@ -1,0 +1,4 @@
+config,leg_slot0_deg,leg_slot1_deg,leg_slot2_deg,leg_slot3_deg,leg_slot4_deg,leg_slot5_deg,max_deg
+A_legacyIK_historical,24.90,24.76,25.23,24.82,24.82,25.14,25.23
+B_srcIK_historical,44.31,43.74,44.00,44.18,43.85,43.83,44.31
+C_srcIK_legs1to6,0.37,0.24,0.22,0.25,0.23,0.30,0.37

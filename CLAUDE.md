@@ -51,8 +51,9 @@ Toujours documenter les nouvelles fonctionnalités.
 ## Commandes utiles
 
 ```bash
-pip install -r requirements.txt                       # dépendances (voir note dans le rapport d'analyse)
-python3 -m pytest tests/unit_tests                    # tests unitaires (sans GUI)
+pip install -r requirements-dev.txt                   # dépendances + pytest + jupyterlab
+python3 -m pytest tests/unit_tests tests/validation_tests   # tests sans GUI (PyBullet en mode DIRECT)
+python3 scripts/experiments/exp002_ik_vs_urdf.py      # rejoue EXP-002 → results/kinematics/
 python3 run_simulation.py                             # menu de lancement
 python3 scripts/system_check.py                       # diagnostic de l'environnement
 ```
@@ -63,7 +64,8 @@ python3 scripts/system_check.py                       # diagnostic de l'environn
 
 Voir `docs/reports/2026-09-24_analyse_depot.md`, section « Dette technique ». En priorité :
 
-- **A1** : `src/core/kinematics.py` ne reproduit pas l'IK d'origine (`legacy/inv_kinematics.py`). Écart jusqu'à 42 mm et ordre des jambes permuté.
+- ~~A1~~ **résolu** (EXP-002) : l'IK `src` est validée contre le URDF. Utiliser `DEFAULT_ACTUATOR_INDICES` (`src/core/platform.py`), jamais l'ancien `[9, 2, 31, 45, 38, 24]` (qui n'est valable qu'avec `legacy/inv_kinematics.py`).
+- **Simulation bloquée hors de l'axe z** (EXP-002) : les résultats dynamiques PyBullet ne sont pas quantitativement exploitables tant que la Phase 4 n'a pas traité ce point.
 - **A3** : `src/core/platform.py` ne crée pas les contraintes de fermeture de boucle.
 - **A5** : les fonctions « pose courante » renvoient la pose de la base, pas celle de la plateforme.
 

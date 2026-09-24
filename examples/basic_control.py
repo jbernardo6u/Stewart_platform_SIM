@@ -15,8 +15,8 @@ path = "simulation/urdf/Stewart.urdf"
 joint_indices = [(6, 16), (35, 17), (49, 18), (42, 19), (28, 20)]
 
 # Define the actuators for each pair of linked joints
-actuator_indices = [9, 2, 31, 45, 38, 24]     #[1,0,3,5,4,2][9, 2, 31, 45, 38, 24] 
-                                        # [0: 2, 1: 31, 2: 45, 3: 38, 4: 24, 5: 9]
+# Slider_13..18 = jambes 1 à 6, ordre de InverseKinematics.solve() (EXP-002)
+actuator_indices = [2, 31, 45, 38, 24, 9]
 
 # Define the stewart platform design variables
 radious_platform, radious_base = 0.2, 0.2         # meters

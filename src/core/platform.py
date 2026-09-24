@@ -18,6 +18,14 @@ from typing import List, Tuple, Union, Optional
 from ..core.kinematics import InverseKinematics
 
 
+# Correspondance avec simulation/urdf/Stewart.urdf (voir docs/experiments/EXP-002).
+# Paires de liens fermant les boucles des jambes 1 à 5 (la jambe 6 est fermée par l'arbre URDF).
+DEFAULT_JOINT_INDICES = [(6, 16), (35, 17), (49, 18), (42, 19), (28, 20)]
+# Joints prismatiques Slider_13..Slider_18 = jambes 1 à 6, dans l'ordre des longueurs
+# renvoyées par InverseKinematics.solve().
+DEFAULT_ACTUATOR_INDICES = [2, 31, 45, 38, 24, 9]
+
+
 class StewartPlatform:
     """
     Classe principale pour la simulation d'une plateforme de Stewart avec PyBullet.

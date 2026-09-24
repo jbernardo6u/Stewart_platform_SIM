@@ -4,13 +4,13 @@ Simulation avec enregistrement vidéo MP4
 Alternative à la visualisation en temps réel
 """
 
-from src.core.platform import StewartPlatform as sp
+from src.core.platform import StewartPlatform as sp, DEFAULT_JOINT_INDICES, DEFAULT_ACTUATOR_INDICES
 import numpy as np
 
 # Configuration
 path = "simulation/urdf/Stewart.urdf"
-joint_indices = [(6, 16), (35, 17), (49, 18), (42, 19), (28, 20)]
-actuator_indices = [9, 2, 31, 45, 38, 24]
+joint_indices = DEFAULT_JOINT_INDICES
+actuator_indices = DEFAULT_ACTUATOR_INDICES
 design_variables = [0.2, 0.2, 12, 12]
 
 # Trajectoire de démonstration

@@ -10,7 +10,7 @@ import numpy as np
 # Configuration identique à main.py
 path = "simulation/urdf/Stewart.urdf"
 joint_indices = [(6, 16), (35, 17), (49, 18), (42, 19), (28, 20)]
-actuator_indices = [9, 2, 31, 45, 38, 24]
+actuator_indices = [2, 31, 45, 38, 24, 9]  # jambes 1 à 6 (EXP-002)
 
 # Variables de design de la plateforme
 radious_platform, radious_base = 0.2, 0.2

@@ -158,12 +158,12 @@ def demonstrate_trajectory(trajectory_type: str = 'ellipse', use_simulation: boo
     if use_simulation:
         print("🚀 Lancement de la simulation PyBullet...")
         try:
-            from src.core.platform import StewartPlatform
+            from src.core.platform import StewartPlatform, DEFAULT_JOINT_INDICES, DEFAULT_ACTUATOR_INDICES
             
             # Configuration de la plateforme
             urdf_path = "simulation/urdf/Stewart.urdf"
-            joint_indices = [(6, 16), (35, 17), (49, 18), (42, 19), (28, 20)]
-            actuator_indices = [9, 2, 31, 45, 38, 24]
+            joint_indices = DEFAULT_JOINT_INDICES
+            actuator_indices = DEFAULT_ACTUATOR_INDICES
             
             # Créer et initialiser la plateforme
             platform = StewartPlatform(urdf_path, joint_indices, actuator_indices, design_variables)

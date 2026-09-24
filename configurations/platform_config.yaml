@@ -38,8 +38,9 @@ simulation:
     - [42, 19]
     - [28, 20]
   
-  # Indices des actionneurs linéaires
-  actuator_indices: [9, 2, 31, 45, 38, 24]
+  # Indices des actionneurs linéaires : Slider_13..18 = jambes 1 à 6,
+  # dans l'ordre des longueurs de InverseKinematics.solve() (EXP-002)
+  actuator_indices: [2, 31, 45, 38, 24, 9]
   
   # Paramètres de simulation
   gravity: [0, 0, -9.81]

@@ -73,11 +73,11 @@ flowchart TB
 | Maillages STL (51) | `simulation/meshes/` | ✅ Existant |
 | Graphe des liens | `simulation/urdf/Link_graph.txt` | ✅ Existant |
 | CAO source | `models/geometry/cad/Stewart_CAD.f3d` | ✅ Existant |
-| Adaptateur PyBullet | `src/core/platform.py`, `src/simulation/pybullet_sim.py` | ⚠️ Deux wrappers concurrents ; fermeture de boucle manquante dans `src` (anomalie A3) |
+| Adaptateur PyBullet | `src/core/platform.py`, `src/simulation/pybullet_sim.py` | ⚠️ Deux wrappers concurrents ; fermeture de boucle manquante dans `src` (A3) ; même fermée, la boucle se bloque hors de l'axe z (EXP-002) |
 | Gazebo, mondes, launch | `simulation/gazebo/`, `simulation/worlds/`, `simulation/launch/` | ⬜ À créer (Phase 4) |
 | Visualisation | `src/gui/`, `src/simulation/matplotlib_viz.py`, `scripts/create_web_viz.py` | ✅ Existant, à découpler du modèle |
 
-**Fermeture de boucle** : l'URDF est un arbre. Cinq jambes sont fermées à l'exécution par des contraintes `JOINT_FIXED` entre les paires `joint_indices = [(6,16), (35,17), (49,18), (42,19), (28,20)]`, et la 6e est fermée par l'arbre lui-même. Les vérins sont les joints prismatiques `actuator_indices = [9, 2, 31, 45, 38, 24]`. Sous Gazebo, cette fermeture devra passer par SDF (`<joint>` en boucle) ou par un plugin.
+**Fermeture de boucle** : l'URDF est un arbre. Cinq jambes sont fermées à l'exécution par des contraintes `JOINT_FIXED` entre les paires `joint_indices = [(6,16), (35,17), (49,18), (42,19), (28,20)]`, et la 6e est fermée par l'arbre lui-même. Les vérins sont les joints prismatiques `Slider_13` à `Slider_18` = jambes 1 à 6, soit `DEFAULT_ACTUATOR_INDICES = [2, 31, 45, 38, 24, 9]` (`src/core/platform.py`), dans l'ordre des sorties de l'IK. Cette correspondance est validée à 0,4° près par [EXP-002](docs/experiments/EXP-002-validation-ik-urdf.md). L'ancien ordre `[9, 2, 31, 45, 38, 24]` n'était valable qu'avec l'IK historique. Sous Gazebo, cette fermeture devra passer par SDF (`<joint>` en boucle) ou par un plugin.
 
 ## Niveau 2 : Géométrie
 
@@ -103,7 +103,7 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 
 | Fonction | Emplacement | État |
 |---|---|---|
-| Cinématique inverse | `src/core/kinematics.py::InverseKinematics` | ✅ Implémentée. ⚠️ Non équivalente à l'IK d'origine (anomalie A1), à arbitrer en Phase 2 |
+| Cinématique inverse | `src/core/kinematics.py::InverseKinematics` | ✅ Implémentée et **validée contre le URDF** (EXP-002). L'IK d'origine décrivait le mécanisme tourné de −60° |
 | Cinématique directe (Newton-Raphson sur les 6 longueurs) | `models/kinematics/` | ⬜ À créer |
 | Jacobien, singularités, conditionnement | `models/kinematics/` | ⬜ À créer |
 | Espace de travail | `models/kinematics/` | ⬜ À créer |
@@ -137,11 +137,11 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 | Élément | Emplacement | État |
 |---|---|---|
 | Mesures | `datasets/` | ⬜ Aucune donnée réelle |
-| Tests unitaires | `tests/unit_tests/` | ⚠️ 11 tests IK, dont 1 échec (attente erronée) |
+| Tests unitaires | `tests/unit_tests/` | ✅ 12 tests (IK, paramètres de la plateforme physique) |
 | Tests d'intégration | `tests/integration_tests/` | ⚠️ Scripts hérités ; 2 imports cassés, 1 nécessite un affichage |
-| Tests de validation (simulation contre réel) | `tests/validation_tests/` | ⬜ |
+| Tests de validation | `tests/validation_tests/` | 🟡 IK contre URDF (EXP-002) ; simulation contre réel à venir |
 | Analyse d'erreur | `results/`, `docs/validation/` | ⬜ |
-| Traçabilité CIR | `docs/experiments/` | ✅ Gabarit créé |
+| Traçabilité CIR | `docs/experiments/` | ✅ Gabarit + EXP-002 |
 
 ## Dépendances des modules
 

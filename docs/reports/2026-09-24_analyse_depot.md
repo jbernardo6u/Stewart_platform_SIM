@@ -4,6 +4,7 @@
 - **Périmètre** : dépôt `Stewart_platform_SIM` (fork de `mlayek21/Stewart-Platform`), branche `master`, commit `7d14aaf` + modifications non commitées
 - **Méthode** : lecture intégrale du code Python, de la configuration et de la documentation ; comparaison des doublons avec `diff` ; exécution de la suite de tests ; chargement du URDF dans PyBullet (mode DIRECT) ; comparaison numérique de l'ancienne et de la nouvelle cinématique inverse.
 - **Règle** : ce rapport décrit l'état **avant** restructuration. Il n'a entraîné aucune modification de code.
+- **Suivi** : A1 et A2 ont été résolus par [EXP-002](../experiments/EXP-002-validation-ik-urdf.md), et l'échec du test neutre ainsi que `requirements.txt` ont été corrigés (voir CHANGELOG). Le reste du rapport est un instantané qui n'est pas mis à jour.
 
 ---
 

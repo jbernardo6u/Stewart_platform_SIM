@@ -106,8 +106,10 @@ class TestInverseKinematics(unittest.TestCase):
         # Vérifier le nombre de vérins
         self.assertEqual(len(leg_lengths), 6)
         
-        # Pour une position neutre, toutes les longueurs devraient être identiques
-        expected_length = np.linalg.norm(self.kinematics.home_pos)
+        # Au neutre, toutes les jambes ont la même longueur ‖home + P_i − B_i‖
+        # (et non ‖home‖ : les attaches base/plateforme sont décalées angulairement)
+        P, B = self.kinematics.get_attachment_points()
+        expected_length = np.linalg.norm(self.kinematics.home_pos + P[:, 0] - B[:, 0])
         for length in leg_lengths:
             self.assertAlmostEqual(length, expected_length, places=4)
     

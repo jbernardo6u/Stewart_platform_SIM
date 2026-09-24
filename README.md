@@ -14,23 +14,39 @@ Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la 
 | [CLAUDE.md](CLAUDE.md) | Règles d'ingénierie pour les contributeurs et les agents |
 | [CHANGELOG.md](CHANGELOG.md) | Historique des changements |
 | [docs/reports/2026-09-24_analyse_depot.md](docs/reports/2026-09-24_analyse_depot.md) | Diagnostic de l'existant et dette technique |
+| [docs/experiments/](docs/experiments/README.md) | Fiches d'expérimentation (registre CIR) |
 
 ## État du projet
 
 | Niveau | État |
 |---|---|
-| 1 · Simulation | 🟡 PyBullet + URDF opérationnels ; Gazebo/ROS2 à créer |
-| 2 · Géométrie | 🟡 Modèle paramétrique ; repères à formaliser |
-| 3 · Cinématique | 🟡 IK implémentée (⚠️ anomalie A1 à arbitrer) ; FK et jacobien à créer |
+| 1 · Simulation | 🟡 PyBullet + URDF opérationnels ; ⚠️ boucle fermée bloquée hors de l'axe z (EXP-002) ; Gazebo/ROS2 à créer |
+| 2 · Géométrie | 🟡 Modèle paramétrique cohérent avec le URDF (0,4°) ; repères à formaliser |
+| 3 · Cinématique | 🟡 IK **validée contre le URDF** (EXP-002) ; FK et jacobien à créer |
 | 4 · Dynamique | ⬜ À créer |
 | 5 · Contrôle | 🟡 Trajectoires géométriques, commande en position basique |
-| 6 · Validation | ⬜ Gabarits prêts, aucune donnée |
+| 6 · Validation | 🟡 14 tests automatisés (unitaires + cohérence IK/URDF) ; aucune mesure réelle |
+
+Phase en cours : **0 (assainissement)**, et **2 (cinématique)** entamée. Détail : [ROADMAP.md](ROADMAP.md).
+
+## Avancement
+
+| Date | Réalisation | Référence |
+|---|---|---|
+| 2026-09-24 | Analyse complète de l'existant : 3 générations de code, 9 anomalies (A1 à A9), doublons, composants morts | [rapport d'analyse](docs/reports/2026-09-24_analyse_depot.md) |
+| 2026-09-24 | Restructuration du dépôt en jumeau numérique (simulation / modèles / contrôle / validation / docs), sans rupture d'API | [rapport de restructuration](docs/reports/2026-09-24_restructuration.md), [ADR-0001](docs/decisions/ADR-0001-conserver-package-src.md) |
+| 2026-09-24 | Architecture cible, roadmap en 8 phases, verrous scientifiques, gabarit d'expérimentation CIR | [ARCHITECTURE.md](ARCHITECTURE.md), [ROADMAP.md](ROADMAP.md), [RESEARCH.md](RESEARCH.md) |
+| 2026-09-24 | **EXP-002** : l'IK `src` est la bonne (écart de 0,4° avec les vérins du URDF). Correction de l'ordre des actionneurs (`[2, 31, 45, 38, 24, 9]`) : l'ancien ordre envoyait à chaque vérin la consigne d'une autre jambe | [EXP-002](docs/experiments/EXP-002-validation-ik-urdf.md) |
+| 2026-09-24 | Dépendances réduites aux 4 paquets réellement utilisés ; tests au vert (14/14) | [CHANGELOG.md](CHANGELOG.md) |
+
+**Limites connues** : la simulation PyBullet en boucle fermée ne suit correctement que les mouvements en z. Pour les autres axes, les vérins restent jusqu'à 18 mm en deçà de leur consigne. Les résultats dynamiques ne sont donc pas encore exploitables quantitativement (Phase 4).
 
 ## Structure
 
 ```
 .
 ├── README.md  CLAUDE.md  ARCHITECTURE.md  ROADMAP.md  CHANGELOG.md  RESEARCH.md
+├── requirements.txt  requirements-dev.txt  setup.py  run_simulation.py
 ├── docs/            design · experiments (CIR) · protocols · decisions (ADR) · validation · reports · guides
 ├── simulation/      urdf (Stewart.urdf) · meshes (51 STL) · gazebo · worlds · launch
 ├── models/          geometry (CAO) · kinematics (notebook) · dynamics · calibration · identification
@@ -41,7 +57,7 @@ Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la 
 ├── datasets/        mesures brutes
 ├── results/         geometry · kinematics · dynamics · experiments
 ├── tests/           unit_tests · integration_tests · validation_tests
-├── scripts/         lanceurs et outils
+├── scripts/         lanceurs, outils, experiments/ (scripts reproductibles des EXP)
 ├── examples/        exemples d'API
 └── legacy/          code et fichiers historiques (non maintenus)
 ```
@@ -51,8 +67,10 @@ Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la 
 ## Installation
 
 ```bash
-pip install -r requirements.txt   # numpy, matplotlib, pybullet (+ pyyaml pour la configuration)
-pip install -e .                  # optionnel
+pip install -r requirements.txt       # exécution : numpy, matplotlib, pybullet, pyyaml
+pip install -r requirements-dev.txt   # + pytest, jupyterlab (tests, notebook)
+pip install -e .                      # optionnel
+sudo apt install python3-tk           # GUI Tkinter, si absente
 python3 scripts/system_check.py   # diagnostic de l'environnement
 ```
 
@@ -86,12 +104,12 @@ leg_lengths = ik.solve(translation=[0.01, 0, 0], rotation=[0, 0, 15])  # m, degr
 ```
 
 ```python
-from src.core.platform import StewartPlatform
+from src.core.platform import StewartPlatform, DEFAULT_JOINT_INDICES, DEFAULT_ACTUATOR_INDICES
 
 platform = StewartPlatform("simulation/urdf/Stewart.urdf",
-                           joint_indices=[(6, 16), (35, 17), (49, 18), (42, 19), (28, 20)],
-                           actuator_indices=[9, 2, 31, 45, 38, 24],
-                           design_variables=[0.2, 0.2, 12, 12])
+                           joint_indices=DEFAULT_JOINT_INDICES,          # fermeture des boucles
+                           actuator_indices=DEFAULT_ACTUATOR_INDICES,    # [2, 31, 45, 38, 24, 9] = jambes 1..6
+                           design_variables=[0.2, 0.2, 12, 12])          # [r_P, r_B, γ_P, γ_B]
 platform.setup_environment(use_gui=True)
 platform.initialize_platform()
 platform.move_to_pose(translation=[0, 0, 0.01], rotation=[5, 0, 0])
@@ -102,7 +120,7 @@ from src.core.trajectory import generate_demo_trajectory
 translations, rotations = generate_demo_trajectory('mixed', n_points=50)
 ```
 
-Conventions actuelles : translations en mètres, rotations en **degrés**, `R = Rx·Ry·Rz`. Voir [ARCHITECTURE.md](ARCHITECTURE.md#niveau-2--géométrie).
+Conventions actuelles : translations en mètres, rotations en **degrés**, `R = Rx·Ry·Rz`. Les longueurs renvoyées par `solve()` sont dans l'ordre des jambes 1 à 6 (Slider_13 à Slider_18 du URDF). N'utilisez jamais l'ancien ordre `[9, 2, 31, 45, 38, 24]` avec cette IK. Voir [ARCHITECTURE.md](ARCHITECTURE.md#niveau-2--géométrie).
 
 ## Configuration
 
@@ -112,7 +130,21 @@ Note : ce fichier n'est pas encore lu par le code (Phase 1).
 ## Tests
 
 ```bash
-python3 -m pytest tests/unit_tests
+python3 -m pytest tests/unit_tests tests/validation_tests   # 14 tests, sans affichage (PyBullet DIRECT)
+```
+
+| Suite | Contenu |
+|---|---|
+| `unit_tests` | IK (11 tests), paramètres de `PhysicalStewartPlatform` |
+| `validation_tests` | Cohérence IK ↔ URDF : axe de chaque vérin à moins de 1° de la jambe du modèle (EXP-002) |
+| `integration_tests` | Scripts hérités, manuels (PyBullet GUI, anciens imports) |
+
+## Expérimentations
+
+Chaque résultat est tracé par une fiche dans [docs/experiments/](docs/experiments/README.md) (format CIR : contexte, verrou, hypothèse, méthodologie, résultats, analyse, conclusion).
+
+```bash
+python3 scripts/experiments/exp002_ik_vs_urdf.py   # rejoue EXP-002 → results/kinematics/exp002_*.csv
 ```
 
 Détails et limites connues : [tests/README.md](tests/README.md).

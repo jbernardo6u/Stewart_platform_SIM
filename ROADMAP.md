@@ -7,8 +7,9 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire.
 
 - ✅ Analyse complète de l'existant (`docs/reports/2026-09-24_analyse_depot.md`)
 - ✅ Arborescence cible, documentation d'architecture, CLAUDE.md, roadmap
-- ⬜ Commit de l'état restructuré
-- ⬜ `requirements.txt` réduit aux dépendances réelles (`numpy`, `matplotlib`, `pybullet`, `pyyaml`, `pytest`), versions épinglées
+- ✅ Commit de l'état restructuré
+- ✅ `requirements.txt` réduit aux dépendances réelles (`numpy`, `matplotlib`, `pybullet`, `pyyaml`) avec versions minimales ; `requirements-dev.txt` (pytest, jupyterlab)
+- ✅ Attente erronée de `test_solve_neutral_position` corrigée : `pytest tests/unit_tests tests/validation_tests` → 14/14
 - ⬜ Intégration continue : `pytest tests/unit_tests` sur chaque push
 - ⬜ Réparer ou retirer : entrée `stewart-test` de `setup.py`, `examples/basic_control.py`, tests d'intégration hérités
 
@@ -23,10 +24,11 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire.
 
 **Sortie** : écart entre attaches paramétriques et URDF < 0,5 mm, documenté (EXP-001).
 
-## Phase 2 : Caractérisation cinématique ⬜
+## Phase 2 : Caractérisation cinématique 🟡
 
-- **Arbitrer l'anomalie A1** : quelle IK (d'origine ou `src`) correspond au URDF ? Test de référence contre PyBullet
-- Corriger l'ordre des arguments de `PhysicalStewartPlatform` (A2) et les docstrings d'unités (A6)
+- ✅ **Anomalie A1 arbitrée** ([EXP-002](docs/experiments/EXP-002-validation-ik-urdf.md)) : l'IK `src` est correcte ; l'ordre des actionneurs est corrigé en `[2, 31, 45, 38, 24, 9]`
+- ✅ Ordre des arguments de `PhysicalStewartPlatform` corrigé (A2)
+- ⬜ Docstrings d'unités et de convention de rotation (A6)
 - Cinématique directe (Newton-Raphson), jacobien, détection des singularités
 - Espace de travail atteignable sous contraintes de course des vérins et de débattement des rotules
 - Tests : aller-retour IK→FK, valeurs de référence, propriétés de symétrie
@@ -45,6 +47,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire.
 ## Phase 4 : Simulation Stewart complète ⬜
 
 - Adaptateur de simulation unique (fusion de `StewartPlatform` et `PyBulletSimulator`) avec fermeture de boucle (A3) et mesure de la pose réelle de la plateforme (A5)
+- **Lever le blocage cinématique** de la boucle fermée observé dans EXP-002 : hors de l'axe z, les vérins n'atteignent pas leur consigne (jusqu'à 18 mm d'écart). Piste : contraintes `JOINT_POINT2POINT` aux centres des cardans
 - Conversion URDF→SDF, monde Gazebo, fermeture de boucle sous Gazebo
 - Scénarios REM : approche du timon, désalignements, charge verticale
 - Enregistrement systématique dans `results/`

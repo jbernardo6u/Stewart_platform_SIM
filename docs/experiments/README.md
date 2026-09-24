@@ -17,4 +17,4 @@ Règles :
 | Id | Titre | Phase | Verrou | Statut |
 |---|---|---|---|---|
 | EXP-001 | Géométrie paramétrique contre URDF | 1 | V-1 | Planifiée |
-| EXP-002 | Validation de l'IK contre PyBullet (arbitrage A1) | 2 | V-2, V-7 | Planifiée |
+| [EXP-002](EXP-002-validation-ik-urdf.md) | Validation de l'IK contre le URDF (arbitrage A1) | 2 | V-2, V-7, V-8 | ✅ Terminée : H1 validée ; blocage dynamique ouvert (Phase 4) |

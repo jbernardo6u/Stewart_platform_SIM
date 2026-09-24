@@ -34,7 +34,7 @@ class PhysicalStewartPlatform:
         
         # Initialisation de la cinématique inverse
         r_P, r_B, gama_P, gama_B = self.design_variable
-        self.clf = InverseKinematics(r_P, r_B, gama_P, gama_B)
+        self.clf = InverseKinematics(r_B, r_P, gama_B, gama_P)
         
         # Calcul des longueurs initiales (position home)
         translation = np.array([0, 0, 0])

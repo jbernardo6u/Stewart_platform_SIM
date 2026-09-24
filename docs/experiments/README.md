@@ -1,0 +1,22 @@
+# Expérimentations : traçabilité CIR
+
+Chaque expérimentation (simulation ou banc) fait l'objet d'une fiche `EXP-XXX-titre-court.md`, créée à partir de [TEMPLATE.md](TEMPLATE.md), selon le format :
+
+Titre · Contexte · Verrou scientifique · Hypothèse · Méthodologie · Résultats · Analyse · Conclusion · Travaux restants
+
+Règles :
+
+- numérotation séquentielle, jamais réutilisée ;
+- une fiche se rattache à au moins un verrou `V-x` de [RESEARCH.md](../../RESEARCH.md) et à une phase de [ROADMAP.md](../../ROADMAP.md) ;
+- les données brutes vont dans `datasets/`, les sorties dans `results/`, et la fiche y renvoie ;
+- noter le hash du commit utilisé pour que le résultat soit reproductible ;
+- une expérience ratée est aussi documentée, parce qu'elle justifie l'incertitude scientifique.
+
+## Registre
+
+| Id | Titre | Phase | Verrou | Statut |
+|---|---|---|---|---|
+| [EXP-001](EXP-001-geometrie-urdf.md) | Géométrie réelle du URDF contre modèle paramétrique | 1 | V-1, V-7 | ✅ Terminée : écart de 0,8 à 1,6 mm ; géométrie identifiée adoptée |
+| [EXP-002](EXP-002-validation-ik-urdf.md) | Validation de l'IK contre le URDF (arbitrage A1) | 2 | V-2, V-7, V-8 | ✅ Terminée : H1 validée |
+| [EXP-004](EXP-004-simulation-boucle-fermee.md) | Déblocage et validation de la simulation en boucle fermée | 4 | V-7, V-8 | ✅ Terminée : 0,28 mm / 0,044° |
+| EXP-005 | Même trajectoire sous PyBullet et Gazebo | 4 | V-7, V-8 | Planifiée |

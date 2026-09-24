@@ -1,0 +1,4 @@
+# Développement, tests et notebook (models/kinematics/notebooks/analysis.ipynb)
+-r requirements.txt
+pytest>=6.2
+jupyterlab>=3.4

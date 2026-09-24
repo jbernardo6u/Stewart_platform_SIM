@@ -1,0 +1,150 @@
+# Configuration de la Plateforme de Stewart
+# ==========================================
+
+# Paramètres géométriques de la plateforme
+platform:
+  # Rayons en mètres
+  radius_base: 0.2          # Rayon de la base
+  radius_platform: 0.2      # Rayon de la plateforme mobile
+  
+  # Angles en degrés
+  gamma_base: 12            # Demi-angle de la base
+  gamma_platform: 12       # Demi-angle de la plateforme
+  
+  # Position de référence
+  home_position: [0, 0, 0.257547]  # Position neutre [x, y, z]
+
+  # Géométrie réelle identifiée dans simulation/urdf/Stewart.urdf (EXP-001).
+  # Utilisée par StewartPlatform.from_urdf() ; le modèle paramétrique ci-dessus
+  # s'en écarte de 0,8 à 1,6 mm par point d'attache.
+  identified:
+    radius_base: 0.19958
+    radius_platform: 0.19958
+    gamma_base: 12.295
+    gamma_platform: 12.295          # ±0,2° selon la jambe (plateforme non strictement symétrique)
+    home_position: [-0.001169, 0.000420, 0.253489]
+    platform_z_spread_mm: 1.075     # attaches plateforme non coplanaires
+
+  # Vérins : course [0, 0.19] m ; pose neutre = butée basse.
+  # Travailler autour de la hauteur de travail (mi-course).
+  working_height: 0.09
+  
+  # Limites de mouvement
+  limits:
+    translation:
+      x: [-0.02, 0.02]      # Limites en X (mètres)
+      y: [-0.02, 0.02]      # Limites en Y (mètres)
+      z: [-0.02, 0.02]      # Limites en Z (mètres)
+    rotation:
+      roll: [-30, 30]       # Limites en roll (degrés)
+      pitch: [-30, 30]      # Limites en pitch (degrés)
+      yaw: [-30, 30]        # Limites en yaw (degrés)
+
+# Configuration de simulation
+simulation:
+  # Fichiers URDF
+  urdf_path: "simulation/urdf/Stewart.urdf"
+  
+  # Indices des joints dans le modèle URDF
+  joint_indices:
+    - [6, 16]
+    - [35, 17]
+    - [49, 18]
+    - [42, 19]
+    - [28, 20]
+  
+  # Indices des actionneurs linéaires : Slider_13..18 = jambes 1 à 6,
+  # dans l'ordre des longueurs de InverseKinematics.solve() (EXP-002)
+  actuator_indices: [2, 31, 45, 38, 24, 9]
+  
+  # Paramètres de simulation
+  gravity: [0, 0, -9.81]
+  time_step: 0.004166667    # 1/240 seconde
+  
+  # Configuration PyBullet GUI
+  gui:
+    width: 1280
+    height: 720
+    enable_shadows: true
+    enable_wireframe: false
+
+# Configuration matérielle
+hardware:
+  # Type de communication
+  communication: "serial"   # "serial", "usb", "ethernet"
+  
+  # Paramètres série
+  serial:
+    port: "/dev/ttyUSB0"    # Port série (Linux)
+    # port: "COM3"          # Port série (Windows)
+    baudrate: 115200
+    timeout: 1.0
+  
+  # Configuration des moteurs
+  motors:
+    type: "JGA25-371"       # Type de moteur
+    gear_ratio: 371         # Rapport de réduction
+    encoder_ppr: 11         # Impulsions par tour de l'encodeur
+    max_speed: 100          # Vitesse maximale (RPM)
+    max_force: 1000         # Force maximale (unités arbitraires)
+  
+  # Calibration des actionneurs
+  actuators:
+    initial_lengths: [0.173205, 0.173205, 0.173205, 0.173205, 0.173205, 0.173205]
+    min_length: 0.15        # Longueur minimale des vérins (m)
+    max_length: 0.25        # Longueur maximale des vérins (m)
+    
+    # Facteurs de correction pour chaque vérin (si nécessaire)
+    calibration_factors: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+# Configuration des interfaces graphiques
+gui:
+  # Thème par défaut
+  theme: "dark"             # "dark", "light"
+  
+  # Fréquence de mise à jour des affichages
+  update_frequency: 30      # Hz
+  
+  # Paramètres de visualisation 3D
+  visualization:
+    matplotlib:
+      figure_size: [10, 8]
+      dpi: 100
+      animation_interval: 50  # ms
+    
+    web:
+      export_path: "output/web_visualization.html"
+      auto_open: true
+
+# Configuration du logging
+logging:
+  level: "INFO"             # "DEBUG", "INFO", "WARNING", "ERROR"
+  file: "output/logs/stewart_platform.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # Logs spécifiques
+  log_movements: true       # Enregistrer les mouvements
+  log_errors: true          # Enregistrer les erreurs
+  log_hardware: true        # Enregistrer les interactions hardware
+
+# Trajectoires prédéfinies
+trajectories:
+  demo:
+    type: "mixed"
+    duration: 10.0          # secondes
+    points: 50
+  
+  calibration:
+    type: "test_sequence"
+    
+  ellipse:
+    center: [0, 0, 0]
+    radii: [0.01, 0.005]
+    points: 50
+    turns: 2
+  
+  spiral:
+    radius: 0.005
+    height: 0.002
+    points: 100
+    turns: 2

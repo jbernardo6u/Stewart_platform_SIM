@@ -22,6 +22,16 @@ from typing import Dict, List, Tuple, Optional, Any
 from ..core.platform import StewartPlatform, DEFAULT_WORKING_HEIGHT
 
 
+# Point visé par la caméra : centre de la plateforme à la position de travail (m)
+CAMERA_TARGET = (0.0, 0.0, 0.3)
+CAMERA_VIEWS = {
+    'front': {'distance': 1.1, 'yaw': 0, 'pitch': -5},
+    'side': {'distance': 1.1, 'yaw': 90, 'pitch': -5},
+    'top': {'distance': 1.1, 'yaw': 0, 'pitch': -89.9},
+    'isometric': {'distance': 1.2, 'yaw': 45, 'pitch': -25},
+}
+
+
 class PyBulletSimulator:
     """
     PyBullet-based simulator for Stewart Platform.
@@ -34,16 +44,20 @@ class PyBulletSimulator:
     - Debug visualization
     """
     
-    def __init__(self, urdf_path: str, gui: bool = True):
+    def __init__(self, urdf_path: str, gui: bool = True, offscreen: bool = False):
         """
         Initialize the PyBullet simulator.
         
         Args:
             urdf_path: Path to the URDF file
-            gui: Whether to use GUI mode
+            gui: Whether to use GUI mode (separate PyBullet window)
+            offscreen: In DIRECT mode, load the EGL renderer so that ``render_image``
+                       uses the GPU (falls back to the CPU TinyRenderer if unavailable)
         """
         self.urdf_path = urdf_path
         self.gui = gui
+        self.offscreen = offscreen
+        self.egl_plugin: Optional[int] = None
         self.physics_client = None
         self.robot_id = None
         self.plane_id = None
@@ -62,12 +76,7 @@ class PyBulletSimulator:
         self.recording_filename: Optional[str] = None
         
         # Camera settings
-        self.camera_settings = {
-            'distance': 2.0,
-            'yaw': 45,
-            'pitch': -30,
-            'target': [0, 0, 0]
-        }
+        self.camera_settings = dict(CAMERA_VIEWS['isometric'], target=list(CAMERA_TARGET))
         
         # Debug settings
         self.debug_display = False
@@ -96,6 +105,8 @@ class PyBulletSimulator:
             p.setGravity(*self.gravity)
             p.setTimeStep(self.time_step)
             p.setRealTimeSimulation(0)
+            if self.offscreen and not self.gui:
+                self._load_egl_renderer()   # avant les modèles, sinon ils ne sont pas rendus
             
             # Load environment
             self.plane_id = p.loadURDF("plane.urdf")
@@ -118,11 +129,26 @@ class PyBulletSimulator:
             print(f"Failed to connect to PyBullet: {e}")
             return False
     
+    def _load_egl_renderer(self):
+        """Rendu GPU hors écran (greffon EGL de PyBullet) ; sans lui, rendu logiciel."""
+        try:
+            import pkgutil
+            loader = pkgutil.get_loader('eglRenderer')
+            if loader is not None:
+                plugin = p.loadPlugin(loader.get_filename(), "_eglRendererPlugin")
+                self.egl_plugin = plugin if plugin >= 0 else None
+        except Exception as e:
+            print(f"EGL renderer unavailable, using TinyRenderer: {e}")
+            self.egl_plugin = None
+
     def disconnect(self):
         """Disconnect from PyBullet."""
         if self.connected:
             if self.recording:
                 self.stop_recording()
+            if self.egl_plugin is not None:
+                p.unloadPlugin(self.egl_plugin)
+                self.egl_plugin = None
             p.disconnect()
             self.connected = False
             self.physics_client = None
@@ -190,23 +216,60 @@ class PyBulletSimulator:
         if not self.connected:
             return
         
-        views = {
-            'front': {'distance': 2.0, 'yaw': 0, 'pitch': 0, 'target': [0, 0, 0]},
-            'side': {'distance': 2.0, 'yaw': 90, 'pitch': 0, 'target': [0, 0, 0]},
-            'top': {'distance': 2.0, 'yaw': 0, 'pitch': -90, 'target': [0, 0, 0]},
-            'isometric': {'distance': 2.5, 'yaw': 45, 'pitch': -30, 'target': [0, 0, 0]}
-        }
-        
-        if view_type in views:
-            settings = views[view_type]
-            self.camera_settings.update(settings)
-            
-            p.resetDebugVisualizerCamera(
-                cameraDistance=settings['distance'],
-                cameraYaw=settings['yaw'],
-                cameraPitch=settings['pitch'],
-                cameraTargetPosition=settings['target']
-            )
+        if view_type in CAMERA_VIEWS:
+            self.camera_settings.update(CAMERA_VIEWS[view_type], target=list(CAMERA_TARGET))
+            self._apply_camera()
+
+    def orbit_camera(self, d_yaw: float = 0.0, d_pitch: float = 0.0, zoom: float = 1.0):
+        """Fait tourner la caméra autour de la plateforme (degrés) et zoome (facteur de distance)."""
+        cam = self.camera_settings
+        cam['yaw'] = (cam['yaw'] + d_yaw) % 360
+        cam['pitch'] = float(np.clip(cam['pitch'] + d_pitch, -89.9, 10.0))
+        cam['distance'] = float(np.clip(cam['distance'] * zoom, 0.4, 4.0))
+        if self.connected:
+            self._apply_camera()
+
+    def _apply_camera(self):
+        if self.gui:
+            cam = self.camera_settings
+            p.resetDebugVisualizerCamera(cameraDistance=cam['distance'], cameraYaw=cam['yaw'],
+                                         cameraPitch=cam['pitch'], cameraTargetPosition=cam['target'])
+
+    def style_scene(self, floor_rgba=(0.32, 0.36, 0.44, 1), body_rgba=(0.78, 0.80, 0.84, 1),
+                    platform_rgba=(0.30, 0.55, 1.0, 1)):
+        """Couleurs du sol, du mécanisme et de la plateforme mobile (affichage uniquement)."""
+        if not self.connected or self.platform is None:
+            return
+        p.changeVisualShape(self.plane_id, -1, rgbaColor=list(floor_rgba))
+        for link in range(-1, p.getNumJoints(self.robot_id)):
+            p.changeVisualShape(self.robot_id, link, rgbaColor=list(body_rgba))
+        p.changeVisualShape(self.robot_id, self.platform.platform_link, rgbaColor=list(platform_rgba))
+        self._body_rgba = list(body_rgba)
+
+    def set_actuator_colors(self, colors):
+        """Couleur RGBA de la tige de chaque vérin (ex. rouge si saturé)."""
+        if not self.connected or self.platform is None:
+            return
+        for joint, rgba in zip(self.platform.actuator_indices, colors):
+            p.changeVisualShape(self.robot_id, joint, rgbaColor=list(rgba))
+
+    def render_image(self, width: int = 960, height: int = 600) -> Optional[np.ndarray]:
+        """
+        Image RGB (height, width, 3, uint8) de la scène vue par la caméra courante.
+
+        Rendu GPU si le greffon EGL est chargé (``offscreen=True``), sinon rendu logiciel
+        (plus lent : réduire la taille).
+        """
+        if not self.connected:
+            return None
+        cam = self.camera_settings
+        view = p.computeViewMatrixFromYawPitchRoll(cam['target'], cam['distance'], cam['yaw'],
+                                                   cam['pitch'], 0, 2)
+        proj = p.computeProjectionMatrixFOV(45, width / height, 0.05, 10)
+        renderer = p.ER_BULLET_HARDWARE_OPENGL if self.egl_plugin is not None else p.ER_TINY_RENDERER
+        _, _, rgba, _, _ = p.getCameraImage(width, height, view, proj, renderer=renderer,
+                                            shadow=1, lightDirection=[1, 1, 2])
+        return np.reshape(np.asarray(rgba, dtype=np.uint8), (height, width, 4))[:, :, :3]
     
     def set_debug_display(self, enabled: bool):
         """

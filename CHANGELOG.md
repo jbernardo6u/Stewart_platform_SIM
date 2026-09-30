@@ -4,6 +4,34 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié]
 
+### Ajouté : tableau de bord et modes de simulation (2026-09-30)
+- **Tableau de bord unique** `src/gui/dashboard.py` (CustomTkinter, thèmes sombre et clair), qui remplace les GUI Simple, Advanced et PyBullet : vue 3D de la simulation rendue hors écran dans la fenêtre (EGL, repli logiciel ; glisser et molette), consigne 6 axes relative à la position de travail, course de chaque vérin avec alerte de saturation (aussi en rouge dans la vue 3D), inclinaison des jambes, écart consigne/mesure en direct, scénarios vérifiés avant exécution avec bilan RMS et maximal, arrêt d'urgence. Logique testable sans affichage dans `src/gui/dashboard_controller.py`.
+- `src/core/feasibility.py` : positions des vérins, vérification de la course d'une pose ou d'une trajectoire, inclinaison des jambes.
+- `src/core/scenarios.py` : scénarios à lois horaires d'ordre 5 (approche d'attelage, carré, balayage d'orientation, sinusoïdes 6 axes), tous réalisables.
+- `src/core/config.py` : chargement de `configurations/platform_config.yaml` (aucun code ne le lisait).
+- `PyBulletSimulator` : paramètre optionnel `offscreen`, méthodes `render_image`, `orbit_camera`, `style_scene`, `set_actuator_colors` ; caméras recentrées sur la plateforme.
+- `scripts/run_trajectory.py` (rapport de suivi par scénario), `scripts/run_validation.py` (tests + campagnes, bilan).
+- EXP-007 (espace de travail limité par la course) : script, résultats `results/kinematics/exp007_*`, fiche.
+- Configuration : `platform.actuator_stroke`, `gui.dashboard.limits` et `render_size`.
+- CI GitHub : `.github/workflows/tests.yml`.
+- Tests : `test_feasibility_scenarios.py` (11), `test_dashboard_controller.py` (6).
+- Dépendances : `customtkinter`, `pillow`.
+
+### Modifié (2026-09-30)
+- `run_simulation.py` : cinq modes distincts (tableau de bord, rapport de trajectoires, espace de travail, validation, diagnostic) au lieu de neuf entrées redondantes ; accepte le numéro du mode en argument.
+- `main()` de `simple_gui`, `advanced_gui` et `pybullet_gui` : ouvrent le tableau de bord (signatures inchangées ; classes conservées, dépréciées).
+- `examples/trajectory_demo.py --type spiral` : lacet oscillant ±20° au lieu d'un tour de 360° (60 % des points hors course).
+- `setup.py` : `stewart-gui` → tableau de bord ; entrées `stewart-test` et `stewart-demo` retirées (modules inexistants).
+- `scripts/system_check.py` : vérifie `pyyaml`, `pybullet`, `customtkinter`, `pillow` et le tableau de bord ; recommande les nouveaux points d'entrée.
+- Documentation : `docs/guides/QUICK_START.md` réécrit, README, CLAUDE.md, ARCHITECTURE, ROADMAP (priorités révisées avec le banc réel).
+
+### Corrigé (2026-09-30)
+- Longueurs de vérins affichées par les GUI historiques (`BaseStewartGUI.update_kinematics`) : les millimètres étaient passés comme des mètres (vérins de « 30 m ») et les angles convertis en radians alors que l'IK attend des degrés ; la position de travail n'était pas prise en compte.
+
+### Archivé (2026-09-30)
+- `scripts/launcher.py`, `gui_launcher.py`, `quick_simulation.py`, `simulation_manager.py` → `legacy/scripts/` : lanceurs redondants (le dernier pointait vers un test supprimé).
+- `docs/guides/GUIDE_UTILISATION.md` → `docs/reports/history/` : il décrivait des scripts de 2025 qui n'existent plus à la racine.
+
 ### Corrigé : simulateur de la GUI PyBullet (2026-09-30, suite d'EXP-004)
 - `PyBulletSimulator` (`src/simulation/pybullet_sim.py`) simule enfin le mécanisme au lieu de téléporter le robot entier : il s'appuie sur `StewartPlatform.from_urdf` (géométrie identifiée, boucles fermées, vérins asservis) et monte à la position de travail à la connexion. API publique inchangée (mêmes méthodes, mêmes clés).
   - `update_platform_pose` : position (mm) et rotation (°) **relatives à la position de travail**, converties en consignes de vérins bornées à leur course ; `leg_lengths` est ignoré.

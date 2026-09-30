@@ -56,7 +56,11 @@ python3 -m pytest tests/unit_tests tests/validation_tests   # tests sans GUI (Py
 python3 scripts/experiments/exp001_urdf_geometry.py   # EXP-001 → results/geometry/
 python3 scripts/experiments/exp002_ik_vs_urdf.py      # EXP-002 → results/kinematics/
 python3 scripts/experiments/exp004_closed_loop_tracking.py  # EXP-004 → results/experiments/
-python3 run_simulation.py                             # menu de lancement
+python3 scripts/experiments/exp007_workspace_stroke.py      # EXP-007 → results/kinematics/
+python3 scripts/run_validation.py                     # tests + toutes les campagnes, bilan
+python3 scripts/run_trajectory.py                     # scénarios en simulation DIRECT, erreurs de suivi
+python3 -m src.gui.dashboard                          # tableau de bord (CustomTkinter)
+python3 run_simulation.py                             # menu de lancement (5 modes)
 python3 scripts/system_check.py                       # diagnostic de l'environnement
 ```
 
@@ -70,7 +74,9 @@ Voir `docs/reports/2026-09-24_analyse_depot.md`, section « Dette technique ». 
 - **Simulation** : utiliser `StewartPlatform.from_urdf(...)` (géométrie identifiée, EXP-001), puis `move_to_working_position()` avant tout mouvement. La pose neutre de l'IK est en **butée basse des vérins**, donc toute consigne doit être exprimée autour de `DEFAULT_WORKING_HEIGHT`. Précision validée : 0,28 mm / 0,044° (EXP-004).
 - Ne pas retirer le recentrage des limites [0 ; 2π] dans `setup_constraints()` : sans lui, le mécanisme se bloque.
 - `PyBulletSimulator` (`src/simulation/pybullet_sim.py`, utilisé par la GUI PyBullet) délègue à `StewartPlatform.from_urdf` : ses poses sont en **mm / degrés relatifs à la position de travail**, et `update_platform_pose` ne fait que fixer les consignes (la simulation avance par `step_simulation`).
-- En mode GUI sous WSLg, `p.disconnect()` provoque un segfault à la fermeture de la fenêtre PyBullet (les résultats obtenus avant restent valides).
+- En mode GUI sous WSLg, `p.disconnect()` provoque un segfault (bogue PyBullet/OpenGL, reproduit sans modèle). Le tableau de bord utilise donc DIRECT + rendu hors écran (`PyBulletSimulator(offscreen=True)`, greffon EGL chargé **avant** les modèles) : ne pas le repasser en `p.GUI`.
+- Interfaces : `src/gui/dashboard.py` (vue) + `dashboard_controller.py` (logique testable sans affichage). Les classes `SimpleStewartGUI`, `AdvancedStewartGUI`, `PyBulletStewartGUI` sont dépréciées ; leurs `main()` ouvrent le tableau de bord.
+- Faisabilité : toute trajectoire nouvelle passe par `src.core.feasibility.check_trajectory` (course des vérins) ; les scénarios de démonstration sont dans `src/core/scenarios.py`.
 
 Ne pas « corriger » ces points au détour d'une autre tâche : ils relèvent des Phases 2 et 4 de la roadmap et nécessitent une validation.
 

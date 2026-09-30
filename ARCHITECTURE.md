@@ -77,7 +77,7 @@ flowchart TB
 | Interface GUI du simulateur | `src/simulation/pybullet_sim.py::PyBulletSimulator` | ✅ Délègue à `StewartPlatform.from_urdf` (caméra, enregistrement, forces, état) |
 | Identification géométrique | `src/simulation/urdf_geometry.py` | ✅ Centres des cardans extraits du URDF (EXP-001) |
 | Gazebo, mondes, launch | `simulation/gazebo/`, `simulation/worlds/`, `simulation/launch/` | ⬜ À créer (Phase 4) |
-| Visualisation | `src/gui/`, `src/simulation/matplotlib_viz.py`, `scripts/create_web_viz.py` | ✅ Existant, à découpler du modèle |
+| Visualisation | `src/gui/dashboard.py` (CustomTkinter, vue 3D rendue hors écran), `src/simulation/matplotlib_viz.py`, `scripts/create_web_viz.py` | ✅ Tableau de bord unique ; logique séparée dans `dashboard_controller.py` |
 
 **Fermeture de boucle** : l'URDF est un arbre et chaque jambe une chaîne U-P-R-U à 6 degrés de liberté (cardans idéaux, EXP-001). Cinq jambes sont fermées à l'exécution par des contraintes `JOINT_FIXED` **ancrées sur la pose relative des liens en configuration zéro** (les repères de contrainte PyBullet sont relatifs au centre de masse), entre les paires `joint_indices = [(6,16), (35,17), (49,18), (42,19), (28,20)]`, et la 6e est fermée par l'arbre lui-même. Les vérins sont les joints prismatiques `Slider_13` à `Slider_18` = jambes 1 à 6, soit `DEFAULT_ACTUATOR_INDICES = [2, 31, 45, 38, 24, 9]` (`src/core/platform.py`), dans l'ordre des sorties de l'IK. Cette correspondance est validée à 0,4° près par [EXP-002](docs/experiments/EXP-002-validation-ik-urdf.md). L'ancien ordre `[9, 2, 31, 45, 38, 24]` n'était valable qu'avec l'IK historique. Sous Gazebo, cette fermeture devra passer par SDF (`<joint>` en boucle) ou par un plugin.
 
@@ -149,7 +149,7 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 | Tests d'intégration | `tests/integration_tests/` | ⚠️ Scripts hérités ; 2 imports cassés, 1 nécessite un affichage |
 | Tests de validation | `tests/validation_tests/` | 🟡 12 tests : IK contre URDF (EXP-002), géométrie (EXP-001), suivi en boucle fermée (EXP-004) ; simulation contre réel à venir |
 | Analyse d'erreur | `results/`, `docs/validation/` | ⬜ |
-| Traçabilité CIR | `docs/experiments/` | ✅ Gabarit + EXP-001, EXP-002, EXP-004 |
+| Traçabilité CIR | `docs/experiments/` | ✅ Gabarit + EXP-001, EXP-002, EXP-004, EXP-007 |
 
 ## Dépendances des modules
 
@@ -159,20 +159,20 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 flowchart LR
     subgraph entry["Points d'entrée"]
         RS[run_simulation.py]
-        LA[scripts/launcher.py]
+        SC[scripts/run_*.py]
         EX[examples/*]
         WV[scripts/create_web_viz.py]
     end
     subgraph gui["src/gui"]
-        BG[base_gui]
-        SG[simple_gui]
-        AG[advanced_gui]
-        PG[pybullet_gui]
+        DB[dashboard]
+        DC[dashboard_controller]
+        BG[base_gui · simple/advanced/pybullet_gui, dépréciées]
     end
     subgraph core["src/core"]
         K[kinematics]
         P[platform]
         T[trajectory]
+        FS[feasibility · scenarios · config]
     end
     subgraph sim["src/simulation"]
         PBS[pybullet_sim]
@@ -186,14 +186,15 @@ flowchart LR
     TK{{tkinter}}
     MPL{{matplotlib}}
 
-    RS --> SG & AG & PG
-    LA --> SG & AG & PG & K & MV
+    RS --> DB & SC
+    SC --> DC
     EX --> K & T & P & PP & MCt
     WV --> P & K
-    SG & AG & PG --> BG
+    DB --> DC
+    DC --> FS & P & PBS
+    FS --> K
     BG --> K & P
-    AG --> T
-    PG --> PBS
+    PBS --> P
     P --> K
     P --> PYB
     PBS --> PYB
@@ -202,7 +203,7 @@ flowchart LR
     MV --> MPL
 ```
 
-Problème visible : `src/core/platform.py` (cœur) importe `pybullet`, et `base_gui` importe `platform`. Toute la chaîne GUI hérite donc de PyBullet, même la GUI « simple ».
+Problème visible : `src/core/platform.py` (cœur) importe `pybullet` ; la faisabilité et le tableau de bord en héritent via `StewartPlatform.from_urdf`. La séparation visée (`models` sans simulateur) relève des Phases 1 et 2.
 
 ### Cible
 

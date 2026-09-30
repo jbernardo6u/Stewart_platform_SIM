@@ -1,0 +1,11 @@
+case,dof,min,max,unit,max_leg_tilt_deg,search_capped
+working,x,-200.00,200.00,mm,42.3,True
+working,y,-200.00,200.00,mm,43.2,True
+working,z,-90.00,111.36,mm,25.9,False
+working,roll,-36.09,26.18,deg,27.3,False
+working,pitch,-28.62,28.60,deg,26.2,False
+working,yaw,-71.91,72.00,deg,43.3,False
+yaw-10,x,-175.22,184.32,mm,43.3,False
+yaw-10,y,-200.00,168.29,mm,43.2,True
+yaw+10,x,-183.25,176.76,mm,43.2,False
+yaw+10,y,-200.00,168.63,mm,43.2,True

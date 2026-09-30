@@ -323,17 +323,13 @@ Current Leg Lengths:
 
 
 def main():
-    """Main function to run the simple GUI."""
-    root = tk.Tk()
-    app = SimpleStewartGUI(root)
-    
-    # Handle window closing
-    root.protocol("WM_DELETE_WINDOW", app.on_closing)
-    
-    try:
-        root.mainloop()
-    except KeyboardInterrupt:
-        app.on_closing()
+    """
+    Ouvre le tableau de bord unifié (``src.gui.dashboard``), qui remplace cette interface.
+
+    La classe ``SimpleStewartGUI`` reste disponible pour compatibilité mais n'est plus maintenue.
+    """
+    from .dashboard import main as dashboard_main
+    dashboard_main()
 
 
 if __name__ == "__main__":

@@ -46,7 +46,7 @@ Phases en cours : **1 (géométrie)**, **2 (cinématique)** et **4 (simulation)*
 - la pose neutre de l'IK correspond aux vérins en butée basse : tout mouvement se fait autour de la hauteur de travail (0,09 m) ;
 - avec gravité, la simulation garde ~0,2 à 0,3 mm d'erreur, due à la souplesse des contraintes PyBullet ;
 - la démo `ellipse` du générateur de trajectoires demande un lacet de 360°, irréalisable ;
-- sous WSLg, la fermeture d'une fenêtre PyBullet se termine par un segfault (sans effet sur les résultats).
+- sous WSLg, la fermeture d'une fenêtre PyBullet se termine par un segfault (sans effet sur les résultats) ; le tableau de bord l'évite par un rendu hors écran.
 
 ## Structure
 
@@ -86,16 +86,14 @@ python3 scripts/system_check.py   # diagnostic de l'environnement
 Toutes les commandes se lancent depuis la racine du dépôt.
 
 ```bash
-python3 run_simulation.py                  # menu principal
-python3 scripts/launcher.py                # lanceur graphique (Tk)
+python3 run_simulation.py                  # menu : 5 modes (ou run_simulation.py 1 à 5)
+python3 -m src.gui.dashboard               # 1. tableau de bord 3D (CustomTkinter)
+python3 scripts/run_trajectory.py --save   # 2. scénarios en simulation, erreurs chiffrées
+python3 scripts/experiments/exp007_workspace_stroke.py   # 3. espace de travail
+python3 scripts/run_validation.py          # 4. tests + campagnes EXP-001/002/004/007
+python3 scripts/system_check.py            # 5. diagnostic
 
-python3 -m src.gui.advanced_gui            # GUI avancée (Matplotlib), recommandée
-python3 -m src.gui.simple_gui              # GUI simple (calculs seulement)
-python3 -m src.gui.pybullet_gui            # GUI + simulation PyBullet
-python3 scripts/create_web_viz.py          # génère stewart_visualization.html
-
-python3 examples/trajectory_demo.py --type ellipse
-python3 examples/trajectory_demo.py --type spiral --simulation
+python3 examples/trajectory_demo.py --type sine --simulation   # démo dans une fenêtre PyBullet
 python3 examples/hardware_integration.py --test
 ```
 
@@ -164,8 +162,9 @@ Détails et limites connues : [tests/README.md](tests/README.md).
 
 ## Dépannage
 
-- **PyBullet GUI plante (segmentation fault / core dump)**, fréquent sous WSL ou sans serveur X : utilisez `python3 -m src.gui.advanced_gui` (Matplotlib) ou le mode DIRECT.
-- Guides détaillés : [docs/guides/QUICK_START.md](docs/guides/QUICK_START.md), [docs/guides/GUIDE_UTILISATION.md](docs/guides/GUIDE_UTILISATION.md).
+- **Fenêtre PyBullet : segmentation fault à la fermeture** (WSLg, bogue PyBullet/OpenGL, même sans modèle chargé). Le tableau de bord n'ouvre pas de fenêtre PyBullet (rendu hors écran), il n'est donc pas concerné.
+- Rendu 3D lent dans le tableau de bord : le greffon EGL n'a pas pu être chargé (statut « rendu logiciel ») ; réduire `gui.dashboard.render_size` dans la configuration.
+- Guide détaillé : [docs/guides/QUICK_START.md](docs/guides/QUICK_START.md).
 
 ## Contribuer
 

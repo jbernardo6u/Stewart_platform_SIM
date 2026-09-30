@@ -1,181 +1,77 @@
 #!/usr/bin/env python3
 """
-One-Click Simulation Launcher
-============================
+Lanceur des simulations de la plateforme Stewart (jumeau numérique REM)
+======================================================================
 
-Script ultra-simple pour lancer rapidement les simulations
-Stewart Platform les plus populaires.
+Cinq modes, chacun avec un but distinct :
 
-Usage:
-    python3 run_simulation.py
+1. Tableau de bord 3D   : pilotage interactif, vérins, écart de suivi, scénarios
+2. Rapport trajectoires : scénarios exécutés sans affichage, écart consigne/mesure chiffré
+3. Espace de travail    : débattements atteignables selon la course des vérins (EXP-007)
+4. Validation           : tests automatisés et campagnes EXP-001/002/004/007
+5. Diagnostic           : vérification de l'environnement
+
+Usage :
+    python3 run_simulation.py        # menu
+    python3 run_simulation.py 1      # lance directement un mode
 """
 
-import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
-# Configuration du projet
-project_root = Path(__file__).parent
+project_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_root))
 
-
-def print_banner():
-    """Afficher la bannière."""
-    print("🤖" + "=" * 58 + "🤖")
-    print("  STEWART PLATFORM - ONE-CLICK SIMULATION LAUNCHER")
-    print("🤖" + "=" * 58 + "🤖")
-    print()
+PY = sys.executable
+MODES = [
+    ("1", "Tableau de bord 3D", "pilotage interactif, vérins, suivi en direct, scénarios",
+     [PY, "-m", "src.gui.dashboard"]),
+    ("2", "Rapport trajectoires", "scénarios en simulation sans affichage, erreurs chiffrées",
+     [PY, "scripts/run_trajectory.py", "--save"]),
+    ("3", "Espace de travail", "débattements selon la course des vérins (EXP-007)",
+     [PY, "scripts/experiments/exp007_workspace_stroke.py"]),
+    ("4", "Validation", "tests automatisés et campagnes EXP-001/002/004/007",
+     [PY, "scripts/run_validation.py"]),
+    ("5", "Diagnostic", "vérification de l'environnement et des dépendances",
+     [PY, "scripts/system_check.py"]),
+]
 
 
 def print_menu():
-    """Afficher le menu principal."""
-    menu_items = [
-        ("1", "🎯 Simple GUI", "Basic control interface - perfect for beginners"),
-        ("2", "🔬 PyBullet 3D", "Real-time 3D simulation - most immersive"),
-        ("3", "⚡ Advanced GUI", "Full-featured interface with presets"),
-        ("4", "🔄 Elliptical Demo", "Smooth elliptical trajectory demo"),
-        ("5", "🌀 Spiral Demo", "3D spiral motion with rotation"),
-        ("6", "〰️ Sine Wave Demo", "Multi-axis sinusoidal patterns"),
-        ("7", "🎭 Mixed Demo", "Complex combined movements"),
-        ("8", "🛠️ System Check", "Verify system setup and dependencies"),
-        ("9", "📚 Full Launcher", "Access all project features"),
-        ("q", "🚪 Quit", "Exit the launcher")
-    ]
-    
-    print("Select a simulation to run:")
-    print("-" * 60)
-    
-    for key, title, description in menu_items:
-        print(f"  {key:2s}. {title:15s} - {description}")
-    
-    print("-" * 60)
+    print()
+    print("=" * 72)
+    print("  REM · Plateforme Stewart — jumeau numérique")
+    print("=" * 72)
+    for key, title, description, _ in MODES:
+        print(f"  {key}. {title:22s} {description}")
+    print("  q. Quitter")
+    print("-" * 72)
 
 
-def run_command(cmd, description):
-    """Exécuter une commande avec gestion d'erreur."""
-    try:
-        print(f"🚀 Starting {description}...")
-        if isinstance(cmd, list):
-            subprocess.run(cmd, cwd=project_root)
-        else:
-            # C'est une fonction Python à exécuter
-            cmd()
-        print(f"✅ {description} completed!")
-        return True
-    except Exception as e:
-        print(f"❌ Error running {description}: {e}")
-        return False
-
-
-def launch_simple_gui():
-    """Lancer le GUI simple."""
-    try:
-        from src.gui.simple_gui import main as gui_main
-        gui_main()
-    except Exception as e:
-        print(f"Error: {e}")
-
-
-def launch_pybullet_gui():
-    """Lancer le GUI PyBullet."""
-    try:
-        from src.gui.pybullet_gui import main as gui_main
-        gui_main()
-    except Exception as e:
-        print(f"Error: {e}")
-
-
-def launch_advanced_gui():
-    """Lancer le GUI avancé."""
-    try:
-        from src.gui.advanced_gui import main as gui_main
-        gui_main()
-    except Exception as e:
-        print(f"Error: {e}")
+def run_mode(key: str) -> int:
+    for k, title, _, cmd in MODES:
+        if k == key:
+            print(f"\n>>> {title}\n", flush=True)
+            return subprocess.run(cmd, cwd=project_root).returncode
+    print(f"Choix inconnu : {key}")
+    return 2
 
 
 def main():
-    """Fonction principale."""
-    print_banner()
-    
-    # Vérifier que nous sommes dans le bon répertoire
-    print(f"📂 Working directory: {os.getcwd()}")
-    print(f"📂 Project root: {project_root}")
-    
-    # Vérifier la présence des fichiers essentiels
-    essential_files = [
-        "src/core/kinematics.py",
-        "src/gui/simple_gui.py",
-        "examples/trajectory_demo.py"
-    ]
-    
-    missing_files = []
-    for file_path in essential_files:
-        full_path = project_root / file_path
-        if not full_path.exists():
-            missing_files.append(file_path)
-            print(f"❌ Missing: {full_path}")
-        else:
-            print(f"✅ Found: {full_path}")
-    
-    if missing_files:
-        print("\n❌ Missing essential files:")
-        for file_path in missing_files:
-            print(f"   • {file_path}")
-        print(f"\n🔧 Please check the project structure.")
-        print(f"💡 Try running from the project root directory:")
-        print(f"   cd {project_root}")
-        print(f"   python3 run_simulation.py")
-        return
-    
-    # Menu principal
-    commands = {
-        "1": (launch_simple_gui, "Simple GUI"),
-        "2": (launch_pybullet_gui, "PyBullet 3D Simulation"),
-        "3": (launch_advanced_gui, "Advanced GUI"),
-        "4": (["python3", "examples/trajectory_demo.py", "--type", "ellipse", "--simulation"], "Elliptical Demo"),
-        "5": (["python3", "examples/trajectory_demo.py", "--type", "spiral", "--simulation"], "Spiral Demo"),
-        "6": (["python3", "examples/trajectory_demo.py", "--type", "sine", "--simulation"], "Sine Wave Demo"),
-        "7": (["python3", "examples/trajectory_demo.py", "--type", "mixed", "--simulation"], "Mixed Demo"),
-        "8": (["python3", "scripts/system_check.py"], "System Check"),
-        "9": (["python3", "scripts/launcher.py"], "Full Project Launcher")
-    }
-    
+    if len(sys.argv) > 1:
+        return run_mode(sys.argv[1])
     while True:
+        print_menu()
         try:
-            print_menu()
-            choice = input("\n🎯 Enter your choice: ").strip().lower()
-            
-            if choice == 'q' or choice == 'quit':
-                print("\n👋 Goodbye! Thanks for using Stewart Platform!")
-                break
-            
-            if choice in commands:
-                cmd, description = commands[choice]
-                print(f"\n{'='*60}")
-                
-                success = run_command(cmd, description)
-                
-                if success:
-                    print(f"{'='*60}")
-                    continue_choice = input("\n🔄 Run another simulation? [y/n]: ").strip().lower()
-                    if continue_choice not in ['y', 'yes']:
-                        print("👋 Goodbye!")
-                        break
-                else:
-                    print(f"{'='*60}")
-                    input("Press Enter to return to menu...")
-            else:
-                print("❌ Invalid choice. Please select a number from 1-9 or 'q' to quit.")
-        
-        except KeyboardInterrupt:
-            print("\n\n👋 Goodbye!")
-            break
-        except Exception as e:
-            print(f"❌ Unexpected error: {e}")
-            input("Press Enter to continue...")
+            choice = input("Votre choix : ").strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            print()
+            return 0
+        if choice in ("q", "quit", ""):
+            return 0
+        run_mode(choice)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

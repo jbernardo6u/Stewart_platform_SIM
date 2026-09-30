@@ -1,161 +1,52 @@
-# 🚀 Quick Start - Stewart Platform Simulations
+# Démarrage rapide
 
-Bienvenue dans le projet Stewart Platform ! Ce guide vous aidera à démarrer rapidement avec les simulations.
+## Installation
 
-## 🎯 Démarrage Ultra-Rapide (1 Minute)
-
-### Option 1: Lanceur One-Click ⚡
 ```bash
-python3 run_simulation.py
-```
-**Interface simple avec menu interactif - recommandé pour débuter !**
-
-### Option 2: GUI PyBullet Direct 🔬
-```bash
-python3 -c "from src.gui.pybullet_gui import main; main()"
-```
-**Simulation 3D immédiate avec contrôle en temps réel**
-
-### Option 3: Démonstration Automatique 🎭
-```bash
-python3 examples/trajectory_demo.py --type ellipse --simulation
-```
-**Voir la plateforme exécuter une trajectoire elliptique**
-
-## 🎮 Interfaces Disponibles
-
-| Interface | Difficulté | Description | Commande |
-|-----------|------------|-------------|----------|
-| **Simple GUI** | 🟢 Débutant | Contrôles de base, idéal pour apprendre | `python3 -c "from src.gui.simple_gui import main; main()"` |
-| **Advanced GUI** | 🟡 Intermédiaire | Interface complète avec préréglages | `python3 -c "from src.gui.advanced_gui import main; main()"` |
-| **PyBullet 3D** | 🔵 Tous niveaux | Simulation 3D en temps réel | `python3 -c "from src.gui.pybullet_gui import main; main()"` |
-
-## 🎪 Démonstrations Prêtes à l'Emploi
-
-### Trajectoires Automatiques
-```bash
-# Mouvement elliptique fluide (30s)
-python3 examples/trajectory_demo.py --type ellipse --simulation
-
-# Spirale 3D avec rotation (45s)
-python3 examples/trajectory_demo.py --type spiral --simulation
-
-# Ondes sinusoïdales multi-axes (60s)
-python3 examples/trajectory_demo.py --type sine --simulation
-
-# Trajectoire complexe mixte (90s)
-python3 examples/trajectory_demo.py --type mixed --simulation
+pip install -r requirements.txt        # numpy, matplotlib, pybullet, pyyaml, customtkinter, pillow
+sudo apt install python3-tk            # si Tkinter est absent
+python3 scripts/system_check.py        # diagnostic
 ```
 
-### Mode Interactif
+## Les cinq modes
+
 ```bash
-# Choisir la démonstration depuis un menu
-python3 examples/trajectory_demo.py
+python3 run_simulation.py              # menu ; ou directement : python3 run_simulation.py 1
 ```
 
-## 🛠️ Gestionnaires de Simulation
+| # | Mode | À quoi il sert | Commande directe |
+|---|---|---|---|
+| 1 | **Tableau de bord 3D** | Piloter la plateforme en simulation et voir ce que font les vérins | `python3 -m src.gui.dashboard` |
+| 2 | **Rapport trajectoires** | Chiffrer l'écart de suivi de chaque scénario, sans affichage | `python3 scripts/run_trajectory.py --save` |
+| 3 | **Espace de travail** | Débattements atteignables selon la course des vérins (EXP-007) | `python3 scripts/experiments/exp007_workspace_stroke.py` |
+| 4 | **Validation** | Tests automatisés et campagnes EXP-001/002/004/007, avec bilan | `python3 scripts/run_validation.py` |
+| 5 | **Diagnostic** | Dépendances et imports | `python3 scripts/system_check.py` |
 
-### Simulation Manager (Interface Avancée)
-```bash
-python3 scripts/simulation_manager.py
-```
-Interface complète avec onglets organisés par catégorie.
+## Tableau de bord
 
-### Quick Simulation (Accès Rapide)
-```bash
-python3 scripts/quick_simulation.py
-```
-Lanceur rapide pour les simulations les plus populaires.
+1. **Connecter la simulation** (barre latérale) : la plateforme monte à la position de travail, vérins à mi-course.
+2. **Consigne de pose** : curseurs ou saisie (Entrée), en mm et degrés **relatifs à la position de travail**. Préréglages : Travail, Haut, Bas, Désalignement.
+3. **Vérins** : course utilisée par vérin. Orange sous 10 % ou au-dessus de 90 %, rouge si la pose est hors course ; les vérins saturés sont aussi colorés en rouge dans la vue 3D. L'inclinaison des jambes est donnée à titre indicatif (limite des cardans encore inconnue).
+4. **Écart consigne / mesure** : norme de l'écart de position (mm) et écart d'orientation maximal (°), sur les 10 dernières secondes simulées.
+5. **Trajectoires** : la faisabilité s'affiche dès la sélection ; « Lancer » exécute le scénario puis donne l'écart RMS et maximal.
+6. **Vue 3D** : glisser pour tourner, molette pour zoomer, vues Iso, Face, Côté et Dessus.
 
-### Launcher Principal (Projet Complet)
-```bash
-python3 scripts/launcher.py
-```
-Accès à toutes les fonctionnalités du projet.
+Sans simulation connectée, les curseurs et les jauges fonctionnent quand même (cinématique seule).
 
-## 🔧 Vérification du Système
+Les bornes des curseurs se règlent dans `configurations/platform_config.yaml`, section `gui.dashboard.limits`.
 
-Avant de commencer, vérifiez que tout est bien configuré :
-```bash
-python3 scripts/system_check.py
-```
+## Scénarios
 
-## 📚 Utilisation Typique
+| Clé | Description |
+|---|---|
+| `approach` | Approche d'attelage illustrative : désalignement, alignement, montée, maintien, retour |
+| `square` | Carré horizontal de 40 mm |
+| `orientation` | Roulis, tangage puis lacet successifs |
+| `sine` | Sinusoïdes simultanées sur les six axes |
 
-### 1. Premier Test (Débutant)
-```bash
-# 1. Vérifier le système
-python3 scripts/system_check.py
+Pour en ajouter un, écrire une fonction dans `src/core/scenarios.py` et l'enregistrer dans `SCENARIOS`. Le test `tests/unit_tests/test_feasibility_scenarios.py` vérifie qu'il reste dans la course des vérins.
 
-# 2. Lancer le GUI simple
-python3 run_simulation.py
-# Puis choisir option "1"
-```
+## Dépannage
 
-### 2. Exploration (Intermédiaire)
-```bash
-# 1. Voir une démonstration automatique
-python3 examples/trajectory_demo.py --type ellipse --simulation
-
-# 2. Essayer le contrôle manuel 3D
-python3 run_simulation.py
-# Puis choisir option "2" (PyBullet 3D)
-```
-
-### 3. Utilisation Avancée
-```bash
-# Interface complète avec toutes les fonctionnalités
-python3 scripts/simulation_manager.py
-```
-
-## 🎯 Scénarios d'Usage
-
-| Objectif | Recommandation | Commande |
-|----------|----------------|----------|
-| **Découvrir le projet** | GUI Simple | `python3 run_simulation.py` → option 1 |
-| **Voir la plateforme bouger** | Démo elliptique | `python3 run_simulation.py` → option 4 |
-| **Contrôle manuel en 3D** | PyBullet GUI | `python3 run_simulation.py` → option 2 |
-| **Explorer toutes les fonctions** | Simulation Manager | `python3 scripts/simulation_manager.py` |
-| **Test rapide du système** | System Check | `python3 run_simulation.py` → option 8 |
-
-## 🚨 Résolution de Problèmes
-
-### Erreur "Module not found"
-```bash
-# S'assurer d'être dans le bon répertoire
-cd /path/to/Stewart-Platform
-
-# Vérifier la structure
-python3 scripts/system_check.py
-```
-
-### GUI ne s'affiche pas
-```bash
-# Vérifier tkinter
-python3 -c "import tkinter; print('✅ tkinter OK')"
-
-# Utiliser le mode console si nécessaire
-python3 examples/trajectory_demo.py --type ellipse
-```
-
-### PyBullet indisponible
-```bash
-# Installer PyBullet (optionnel)
-pip install pybullet
-
-# Ou utiliser les GUIs sans 3D
-python3 -c "from src.gui.simple_gui import main; main()"
-```
-
-## 🎉 Prêt à Commencer !
-
-Commencez par cette commande simple :
-```bash
-python3 run_simulation.py
-```
-
-Puis explorez les autres options selon vos besoins !
-
----
-
-**💡 Conseil**: Commencez par le `run_simulation.py` pour une expérience guidée, puis explorez les autres outils selon vos besoins !
+- **Statut « rendu logiciel »** : le greffon EGL n'est pas disponible, le rendu est plus lent. Réduire `gui.dashboard.render_size`.
+- **Segfault en fermant une fenêtre PyBullet** (WSLg) : bogue PyBullet/OpenGL. Il ne concerne que `examples/trajectory_demo.py --simulation`, pas le tableau de bord.

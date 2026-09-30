@@ -3,6 +3,22 @@
 Chaque phase se termine par un **critère de sortie** vérifiable et au moins une fiche d'expérimentation dans `docs/experiments/`.
 Légende : ✅ fait · 🟡 partiel · ⬜ à faire.
 
+## Priorités pour finaliser (révisées le 2026-09-30, banc physique disponible)
+
+Le banc existe : les phases matérielles (6 et 7) ne sont plus un horizon lointain. Ordre proposé :
+
+1. **Préparer le banc tôt** (en parallèle des étapes 2 à 4)
+   - Inventaire du banc réel contre le modèle : dimensions (r, γ, hauteur), course et longueurs réelles des vérins, type de cardans. `hardware.actuators` (0,15–0,25 m, 0,173 m initial) ne correspond pas au URDF (course 0–0,19 m, jambe ≈ 0,286 m au neutre) : à arbitrer.
+   - Interface matériel réelle à la place du stub `MotorController` : lecture des codeurs, consigne de position, arrêt d'urgence, **même API que `PyBulletSimulator`**, pour que le tableau de bord pilote indifféremment la simulation ou le banc.
+   - Protocole de mesure de pose (`docs/protocols/`) : moyen disponible (vision/ArUco, comparateurs, laser tracker ?) et incertitude.
+2. **Cinématique complète** (Phase 2, V-2, V-3) : FK Newton-Raphson, jacobien, singularités, espace de travail avec le débattement des cardans mesuré.
+3. **Statique, dynamique, énergie** (Phase 3, V-4 à V-6) : efforts vérins `J⁻ᵀw` sous la charge du timon ; c'est la question de faisabilité de fond pour REM.
+4. **Commande temps réel** (Phase 5) : limites de vitesse et d'accélération, asservissement, puis ROS2 si imposé.
+5. **Calibration et validation simulation/réel** (Phases 6 et 7), dès que 1 est prêt.
+6. **Scénarios REM complets** (Phase 8) : repère outil, estimation de pose du timon, boucle d'alignement.
+
+Gazebo (Phase 4, EXP-005) n'est utile que si l'intégration ROS2/Gazebo est une exigence : PyBullet est validé à 0,28 mm.
+
 ## Phase 0 : Assainissement du dépôt 🟡
 
 - ✅ Analyse complète de l'existant (`docs/reports/2026-09-24_analyse_depot.md`)
@@ -10,8 +26,10 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire.
 - ✅ Commit de l'état restructuré
 - ✅ `requirements.txt` réduit aux dépendances réelles (`numpy`, `matplotlib`, `pybullet`, `pyyaml`) avec versions minimales ; `requirements-dev.txt` (pytest, jupyterlab)
 - ✅ Attente erronée de `test_solve_neutral_position` corrigée : `pytest tests/unit_tests tests/validation_tests` → 14/14
-- ⬜ Intégration continue : `pytest tests/unit_tests` sur chaque push
-- ⬜ Réparer ou retirer : entrée `stewart-test` de `setup.py`, `examples/basic_control.py`, tests d'intégration hérités
+- ✅ Intégration continue : `.github/workflows/tests.yml` (tests unitaires et de validation, PyBullet DIRECT) sur chaque push
+- ✅ Entrées `stewart-test` / `stewart-demo` de `setup.py` retirées (cibles inexistantes) ; `stewart-gui` ouvre le tableau de bord
+- ✅ Points d'entrée ramenés à `run_simulation.py` (5 modes) ; 4 lanceurs redondants archivés dans `legacy/scripts/`
+- ⬜ Réparer ou retirer : `examples/basic_control.py`, tests d'intégration hérités
 
 **Sortie** : `pytest tests/unit_tests` au vert en CI.
 
@@ -31,7 +49,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire.
 - ✅ Ordre des arguments de `PhysicalStewartPlatform` corrigé (A2)
 - ✅ Docstrings d'unités et de convention de rotation (A6)
 - Cinématique directe (Newton-Raphson), jacobien, détection des singularités
-- Espace de travail atteignable sous contraintes de course des vérins et de débattement des rotules
+- 🟡 Espace de travail atteignable : course des vérins faite ([EXP-007](docs/experiments/EXP-007-espace-travail-course.md) : non limitante en x/y, lacet ±72°) ; débattement des cardans à mesurer sur le banc
 - Tests : aller-retour IK→FK, valeurs de référence, propriétés de symétrie
 
 **Sortie** : erreur aller-retour IK→FK < 1 µm ; IK validée contre PyBullet < 0,1 mm (EXP-002).
@@ -59,7 +77,8 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire.
 
 ## Phase 5 : Contrôle temps réel ⬜
 
-- Générateur de trajectoires avec lois horaires (trapèze, polynôme d'ordre 5), limites de vitesse et d'accélération, **vérification de la course des vérins** (la démo `ellipse` demande un lacet de 360°, irréalisable)
+- 🟡 Scénarios à lois horaires d'ordre 5 (`src/core/scenarios.py`) et **vérification de la course des vérins** (`src/core/feasibility.py`) ; restent les limites de vitesse et d'accélération, et la démo `ellipse` de `generate_demo_trajectory` (lacet de 360°)
+- ✅ Tableau de bord unique (`src/gui/dashboard.py`) : consigne, vérins, écart de suivi en direct, scénarios
 - Contrôle en position, vitesse et accélération ; anticipation dynamique
 - Workspace ROS2 : nodes IK/FK/trajectoire, `ros2_control`, topics, services et actions (voir ARCHITECTURE.md)
 - Couche d'asservissement matériel réelle (remplacement du stub `MotorController`)

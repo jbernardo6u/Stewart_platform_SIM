@@ -28,6 +28,7 @@ platform:
   # Vérins : course [0, 0.19] m ; pose neutre = butée basse.
   # Travailler autour de la hauteur de travail (mi-course).
   working_height: 0.09
+  actuator_stroke: [0.0, 0.19]   # allongement depuis la pose neutre (m), limites des joints Slider_13..18 du URDF
   
   # Limites de mouvement
   limits:
@@ -104,6 +105,20 @@ gui:
   
   # Fréquence de mise à jour des affichages
   update_frequency: 30      # Hz
+
+  # Tableau de bord (src/gui/dashboard.py) : bornes des curseurs, relatives à la position
+  # de travail (mm, degrés). Bornes d'exploration issues d'EXP-007 (course des vérins),
+  # resserrées en x/y où la course n'est pas limitante : inclinaison des jambes ≤ 32°.
+  # Ce ne sont pas des limites mécaniques validées (débattement des cardans à mesurer).
+  dashboard:
+    limits:
+      x: [-100, 100]
+      y: [-100, 100]
+      z: [-85, 105]
+      roll: [-25, 25]
+      pitch: [-25, 25]
+      yaw: [-60, 60]
+    render_size: [960, 600]   # pixels de la vue 3D
   
   # Paramètres de visualisation 3D
   visualization:

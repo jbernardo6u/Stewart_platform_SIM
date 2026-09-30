@@ -20,3 +20,4 @@ Règles :
 | [EXP-002](EXP-002-validation-ik-urdf.md) | Validation de l'IK contre le URDF (arbitrage A1) | 2 | V-2, V-7, V-8 | ✅ Terminée : H1 validée |
 | [EXP-004](EXP-004-simulation-boucle-fermee.md) | Déblocage et validation de la simulation en boucle fermée | 4 | V-7, V-8 | ✅ Terminée : 0,28 mm / 0,044° |
 | EXP-005 | Même trajectoire sous PyBullet et Gazebo | 4 | V-7, V-8 | Planifiée |
+| [EXP-007](EXP-007-espace-travail-course.md) | Espace de travail limité par la course des vérins | 2 | V-3 | ✅ Terminée : course non limitante en x/y, lacet ±72° |

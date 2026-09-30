@@ -4,6 +4,21 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié]
 
+### Modifié : lisibilité et préparation du banc (2026-09-30, suite)
+- Tableau de bord : le graphe « écart consigne/mesure » (deux courbes sur deux axes superposés, difficile à lire) devient deux graphes empilés, **écart de position (mm)** et **écart d'orientation (°)**, chacun avec sa valeur courante, une légende explicative et une ligne pointillée à la précision validée (`gui.dashboard.tracking_criteria`, EXP-004).
+- `scripts/create_video.py` porté : GIF d'un scénario par rendu hors écran (l'ancienne version appelait `start_simmulation`, inexistante) ; ancienne version dans `legacy/scripts/`.
+- `examples/basic_control.py` réécrit (IK, faisabilité, simulation) ; ancienne version dans `legacy/examples/`.
+- `tests/integration_tests/test_physical_platform.py` : import réparé (`src.hardware.physical_platform`), conservé pour le banc.
+- Documentation remise à jour : README (état, avancement, API, configuration, tests), RESEARCH (état de chaque verrou), ARCHITECTURE, ROADMAP, CLAUDE.md, README de `docs/`, `results/`, `controllers/`, `models/`, `simulation/`, `tests/`, QUICK_START.
+
+### Ajouté (2026-09-30, suite)
+- [ADR-0002](docs/decisions/ADR-0002-interface-commune-simulation-banc.md) (proposée) : contrat commun simulation/banc, pour rejouer les mêmes consignes.
+- [PROT-001](docs/protocols/PROT-001-inventaire-banc.md) : grille d'inventaire et de caractérisation du banc, face aux valeurs du modèle.
+
+### Archivé (2026-09-30, suite)
+- `tests/integration_tests/test_no_gui.py`, `test_pybullet_gui.py` → `legacy/tests/integration_tests/` (imports obsolètes, fenêtre PyBullet ; couverts par les tests de validation).
+- `scripts/migrate_imports.py`, `scripts/setup_project.py` → `legacy/scripts/` (outils ponctuels de la migration de 2025).
+
 ### Ajouté : tableau de bord et modes de simulation (2026-09-30)
 - **Tableau de bord unique** `src/gui/dashboard.py` (CustomTkinter, thèmes sombre et clair), qui remplace les GUI Simple, Advanced et PyBullet : vue 3D de la simulation rendue hors écran dans la fenêtre (EGL, repli logiciel ; glisser et molette), consigne 6 axes relative à la position de travail, course de chaque vérin avec alerte de saturation (aussi en rouge dans la vue 3D), inclinaison des jambes, écart consigne/mesure en direct, scénarios vérifiés avant exécution avec bilan RMS et maximal, arrêt d'urgence. Logique testable sans affichage dans `src/gui/dashboard_controller.py`.
 - `src/core/feasibility.py` : positions des vérins, vérification de la course d'une pose ou d'une trajectoire, inclinaison des jambes.

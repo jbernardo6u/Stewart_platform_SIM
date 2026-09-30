@@ -187,17 +187,29 @@ class StewartDashboard(ctk.CTk):
         self.readout.grid(row=1, column=0, sticky="ew", pady=(8, 0))
 
     def _build_tracking(self, main):
-        card = Card(main, "Écart consigne / mesure")
+        card = Card(main, "Précision : écart entre consigne et pose mesurée")
         card.grid(row=1, column=0, sticky="nsew", pady=(16, 0))
         card.body.grid_columnconfigure(0, weight=1)
-        card.body.grid_rowconfigure(0, weight=1)
-        self.figure = Figure(figsize=(6, 2.2), dpi=100)
-        self.ax_mm = self.figure.add_subplot(111)
-        self.ax_deg = self.ax_mm.twinx()
-        (self.line_mm,) = self.ax_mm.plot([], [], lw=1.8, label="position (mm)")
-        (self.line_deg,) = self.ax_deg.plot([], [], lw=1.4, ls="--", label="orientation (°)")
+        card.body.grid_rowconfigure(1, weight=1)
+        criteria = self.ctrl.config['gui']['dashboard']['tracking_criteria']
+        self.criterion_mm = float(criteria['position_mm'])
+        self.criterion_deg = float(criteria['orientation_deg'])
+        ctk.CTkLabel(card.body, justify="left", anchor="w", text_color=COLORS['muted'],
+                     font=ctk.CTkFont(size=11),
+                     wraplength=560,
+                     text=("Position : distance entre le centre mesuré de la plateforme et la consigne. "
+                           "Orientation : plus grand écart des trois angles. "
+                           f"Pointillés : précision validée (EXP-004), {self.criterion_mm:g} mm et "
+                           f"{self.criterion_deg:g}°. Un pic pendant un mouvement = retard de suivi.")
+                     ).grid(row=0, column=0, sticky="ew", pady=(0, 4))
+        self.figure = Figure(figsize=(6, 2.4), dpi=100)
+        self.ax_mm, self.ax_deg = self.figure.subplots(2, 1, sharex=True)
+        (self.line_mm,) = self.ax_mm.plot([], [], lw=1.8)
+        (self.line_deg,) = self.ax_deg.plot([], [], lw=1.8)
+        self.crit_mm = self.ax_mm.axhline(self.criterion_mm, ls=":", lw=1.2)
+        self.crit_deg = self.ax_deg.axhline(self.criterion_deg, ls=":", lw=1.2)
         self.canvas = FigureCanvasTkAgg(self.figure, master=card.body)
-        self.canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
+        self.canvas.get_tk_widget().grid(row=1, column=0, sticky="nsew")
         self._style_plot()
 
     def _build_pose(self, right):
@@ -451,20 +463,30 @@ class StewartDashboard(ctk.CTk):
     def _style_plot(self):
         fg, bg = _mode_color(COLORS['muted']), _mode_color(COLORS['card'])
         self.figure.set_facecolor(bg)
-        for ax in (self.ax_mm, self.ax_deg):
+        for ax, line, crit, color in ((self.ax_mm, self.line_mm, self.crit_mm, COLORS['accent']),
+                                      (self.ax_deg, self.line_deg, self.crit_deg, COLORS['warn'])):
             ax.set_facecolor(bg)
-            ax.tick_params(colors=fg, labelsize=9)
+            ax.tick_params(colors=fg, labelsize=8)
             for spine in ax.spines.values():
                 spine.set_color(fg)
                 spine.set_alpha(0.3)
-        self.line_mm.set_color(_mode_color(COLORS['accent']))
-        self.line_deg.set_color(_mode_color(COLORS['warn']))
-        self.ax_mm.set_ylabel("position (mm)", color=_mode_color(COLORS['accent']), fontsize=9)
-        self.ax_deg.set_ylabel("orientation (°)", color=_mode_color(COLORS['warn']), fontsize=9)
-        self.ax_mm.set_xlabel("temps simulé (s)", color=fg, fontsize=9)
-        self.ax_mm.grid(alpha=0.15)
-        self.figure.tight_layout()
+            ax.grid(alpha=0.15)
+            line.set_color(_mode_color(color))
+            crit.set_color(fg)
+        self.ax_mm.set_ylabel("mm", color=fg, fontsize=9)
+        self.ax_deg.set_ylabel("°", color=fg, fontsize=9)
+        self.ax_deg.set_xlabel("temps simulé (s)", color=fg, fontsize=9)
+        self._set_plot_titles(None, None)
+        self.figure.tight_layout(pad=0.6)
         self.canvas.draw_idle()
+
+    def _set_plot_titles(self, e_mm, e_deg):
+        def title(ax, name, value, unit, color):
+            text = f"{name} : " + ("—" if value is None else f"{value:.2f} {unit}" if unit == "mm"
+                                   else f"{value:.3f}{unit}")
+            ax.set_title(text, loc="left", fontsize=9, color=_mode_color(color), pad=3)
+        title(self.ax_mm, "Écart de position", e_mm, "mm", COLORS['accent'])
+        title(self.ax_deg, "Écart d'orientation", e_deg, "°", COLORS['warn'])
 
     def _refresh_plot(self):
         if not self.ctrl.history:
@@ -473,8 +495,9 @@ class StewartDashboard(ctk.CTk):
         self.line_mm.set_data(t, e_mm)
         self.line_deg.set_data(t, e_deg)
         self.ax_mm.set_xlim(max(0.0, t[-1] - 10), max(10.0, t[-1]))
-        self.ax_mm.set_ylim(0, max(1.0, e_mm.max() * 1.2))
-        self.ax_deg.set_ylim(0, max(0.2, e_deg.max() * 1.2))
+        self.ax_mm.set_ylim(0, max(2 * self.criterion_mm, e_mm.max() * 1.2))
+        self.ax_deg.set_ylim(0, max(2 * self.criterion_deg, e_deg.max() * 1.2))
+        self._set_plot_titles(e_mm[-1], e_deg[-1])
         self.canvas.draw_idle()
 
     def _refresh_run(self):

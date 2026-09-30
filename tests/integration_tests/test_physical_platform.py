@@ -4,7 +4,12 @@ Script de test pour la plateforme Stewart physique
 Avec moteurs JGA25-371 DC Gearmotor
 """
 
-from physical_stewart import PhysicalStewartPlatform
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+from src.hardware.physical_platform import PhysicalStewartPlatform  # noqa: E402
 import numpy as np
 import time
 

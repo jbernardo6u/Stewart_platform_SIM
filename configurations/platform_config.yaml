@@ -119,6 +119,10 @@ gui:
       pitch: [-25, 25]
       yaw: [-60, 60]
     render_size: [960, 600]   # pixels de la vue 3D
+    # Précision validée en simulation (EXP-004), tracée en référence sur le graphe d'écart
+    tracking_criteria:
+      position_mm: 0.5
+      orientation_deg: 0.1
   
   # Paramètres de visualisation 3D
   visualization:

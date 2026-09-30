@@ -2,7 +2,7 @@
 
 > Ce document décrit l'**architecture cible** et l'**état actuel** de chaque niveau.
 > Diagnostic détaillé de départ : [`docs/reports/2026-09-24_analyse_depot.md`](docs/reports/2026-09-24_analyse_depot.md).
-> Décision de transition : [`docs/decisions/ADR-0001-conserver-package-src.md`](docs/decisions/ADR-0001-conserver-package-src.md).
+> Décisions : [ADR-0001](docs/decisions/ADR-0001-conserver-package-src.md) (transition du package `src`), [ADR-0002](docs/decisions/ADR-0002-interface-commune-simulation-banc.md) (interface commune simulation/banc, proposée).
 
 ## Principes
 
@@ -114,7 +114,7 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 | Cinématique inverse | `src/core/kinematics.py::InverseKinematics` | ✅ Implémentée et **validée contre le URDF** (EXP-002). L'IK d'origine décrivait le mécanisme tourné de −60°. Deux géométries : paramétrique (r, γ) ou points identifiés (`from_attachment_points`) |
 | Cinématique directe (Newton-Raphson sur les 6 longueurs) | `models/kinematics/` | ⬜ À créer |
 | Jacobien, singularités, conditionnement | `models/kinematics/` | ⬜ À créer |
-| Espace de travail | `models/kinematics/` | ⬜ À créer |
+| Espace de travail | `src/core/feasibility.py` → `models/kinematics/` | 🟡 Course des vérins (EXP-007) ; cardans et singularités à faire |
 | Dérivation théorique | `models/kinematics/notebooks/analysis.ipynb`, `docs/design/README_original.md` | ✅ Existant |
 
 `L_i = t + h + R · P_i − B_i`, avec `ℓ_i = ‖L_i‖`.
@@ -133,10 +133,10 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 
 | Élément | Emplacement actuel | Cible | État |
 |---|---|---|---|
-| Génération de trajectoires | `src/core/trajectory.py` | `controllers/trajectory_generation/` | ⚠️ Purement géométrique, sans loi horaire ; bug A7 |
-| Contrôle en position | interpolation linéaire + `POSITION_CONTROL` PyBullet | `controllers/motion_control/` | ⚠️ Basique |
+| Génération de trajectoires | `src/core/scenarios.py` (lois d'ordre 5), `src/core/feasibility.py` ; historique `src/core/trajectory.py` | `controllers/trajectory_generation/` | 🟡 Scénarios vérifiés en course ; limites vitesse/accélération à faire ; `trajectory.py` : bug A7 |
+| Contrôle en position | `move_to_pose` (bloquant), `command_pose` (non bloquant) + `POSITION_CONTROL` PyBullet | `controllers/motion_control/` | 🟡 Suivi validé en simulation (0,3 à 0,4 mm RMS sur les scénarios) |
 | Contrôle en vitesse / accélération | aucun | `controllers/motion_control/` | ⬜ |
-| Asservissement des vérins | `src/hardware/motor_controller.py` (stub, P seul) | `controllers/servo_control/` | ⚠️ Stub |
+| Asservissement des vérins | `src/hardware/motor_controller.py` (stub, P seul) | `controllers/servo_control/` | ⚠️ Stub ; interface banc prévue (ADR-0002) |
 | Contrôle inverse (pose → vérins) | `InverseKinematics` | `controllers/inverse_kinematics/` | ✅ |
 | Contrôle direct (vérins → pose) | aucun | `controllers/forward_kinematics/` | ⬜ |
 
@@ -144,10 +144,10 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 
 | Élément | Emplacement | État |
 |---|---|---|
-| Mesures | `datasets/` | ⬜ Aucune donnée réelle |
-| Tests unitaires | `tests/unit_tests/` | ✅ 16 tests (IK paramétrique et à points identifiés, plateforme physique) |
-| Tests d'intégration | `tests/integration_tests/` | ⚠️ Scripts hérités ; 2 imports cassés, 1 nécessite un affichage |
-| Tests de validation | `tests/validation_tests/` | 🟡 12 tests : IK contre URDF (EXP-002), géométrie (EXP-001), suivi en boucle fermée (EXP-004) ; simulation contre réel à venir |
+| Mesures | `datasets/` | ⬜ Aucune donnée réelle ; banc disponible, inventaire [PROT-001](docs/protocols/PROT-001-inventaire-banc.md) |
+| Tests unitaires | `tests/unit_tests/` | ✅ 27 tests (IK, plateforme physique, configuration, faisabilité, scénarios) ; CI GitHub |
+| Tests d'intégration | `tests/integration_tests/` | 🟡 `test_physical_platform.py` : script manuel pour le banc (import réparé) ; scripts hérités archivés |
+| Tests de validation | `tests/validation_tests/` | 🟡 24 tests : IK contre URDF (EXP-002), géométrie (EXP-001), suivi en boucle fermée (EXP-004), simulateur, tableau de bord ; simulation contre réel à venir |
 | Analyse d'erreur | `results/`, `docs/validation/` | ⬜ |
 | Traçabilité CIR | `docs/experiments/` | ✅ Gabarit + EXP-001, EXP-002, EXP-004, EXP-007 |
 

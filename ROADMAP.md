@@ -8,9 +8,10 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire.
 Le banc existe : les phases matérielles (6 et 7) ne sont plus un horizon lointain. Ordre proposé :
 
 1. **Préparer le banc tôt** (en parallèle des étapes 2 à 4)
-   - Inventaire du banc réel contre le modèle : dimensions (r, γ, hauteur), course et longueurs réelles des vérins, type de cardans. `hardware.actuators` (0,15–0,25 m, 0,173 m initial) ne correspond pas au URDF (course 0–0,19 m, jambe ≈ 0,286 m au neutre) : à arbitrer.
+   - Inventaire du banc réel contre le modèle : dimensions (r, γ, hauteur), course et longueurs réelles des vérins, type de cardans. `hardware.actuators` (0,15–0,25 m, 0,173 m initial) ne correspond pas au URDF (course 0–0,19 m, jambe ≈ 0,281 m au neutre) : à arbitrer.
    - Interface matériel réelle à la place du stub `MotorController` : lecture des codeurs, consigne de position, arrêt d'urgence, **même API que `PyBulletSimulator`**, pour que le tableau de bord pilote indifféremment la simulation ou le banc.
    - Protocole de mesure de pose (`docs/protocols/`) : moyen disponible (vision/ArUco, comparateurs, laser tracker ?) et incertitude.
+   - ✅ Préparé : [PROT-001](docs/protocols/PROT-001-inventaire-banc.md) (grille d'inventaire à remplir) et [ADR-0002](docs/decisions/ADR-0002-interface-commune-simulation-banc.md) (contrat `PlatformBackend`, à valider).
 2. **Cinématique complète** (Phase 2, V-2, V-3) : FK Newton-Raphson, jacobien, singularités, espace de travail avec le débattement des cardans mesuré.
 3. **Statique, dynamique, énergie** (Phase 3, V-4 à V-6) : efforts vérins `J⁻ᵀw` sous la charge du timon ; c'est la question de faisabilité de fond pour REM.
 4. **Commande temps réel** (Phase 5) : limites de vitesse et d'accélération, asservissement, puis ROS2 si imposé.
@@ -25,13 +26,13 @@ Gazebo (Phase 4, EXP-005) n'est utile que si l'intégration ROS2/Gazebo est une 
 - ✅ Arborescence cible, documentation d'architecture, CLAUDE.md, roadmap
 - ✅ Commit de l'état restructuré
 - ✅ `requirements.txt` réduit aux dépendances réelles (`numpy`, `matplotlib`, `pybullet`, `pyyaml`) avec versions minimales ; `requirements-dev.txt` (pytest, jupyterlab)
-- ✅ Attente erronée de `test_solve_neutral_position` corrigée : `pytest tests/unit_tests tests/validation_tests` → 14/14
+- ✅ Attente erronée de `test_solve_neutral_position` corrigée (aujourd'hui : 51 tests, voir `tests/README.md`)
 - ✅ Intégration continue : `.github/workflows/tests.yml` (tests unitaires et de validation, PyBullet DIRECT) sur chaque push
 - ✅ Entrées `stewart-test` / `stewart-demo` de `setup.py` retirées (cibles inexistantes) ; `stewart-gui` ouvre le tableau de bord
 - ✅ Points d'entrée ramenés à `run_simulation.py` (5 modes) ; 4 lanceurs redondants archivés dans `legacy/scripts/`
-- ⬜ Réparer ou retirer : `examples/basic_control.py`, tests d'intégration hérités
+- ✅ `examples/basic_control.py` réécrit sur l'API actuelle ; tests d'intégration hérités archivés (`test_physical_platform.py` conservé, import réparé, pour le banc)
 
-**Sortie** : `pytest tests/unit_tests` au vert en CI.
+**Sortie** : `pytest tests/unit_tests` au vert en CI (workflow en place ; premier passage à vérifier sur GitHub).
 
 ## Phase 1 : Caractérisation géométrique 🟡
 
@@ -68,9 +69,9 @@ Gazebo (Phase 4, EXP-005) n'est utile que si l'intégration ROS2/Gazebo est une 
 - ✅ Fermeture de boucle (A3), longueurs initiales (A4) et pose mesurée de la plateforme (A5) dans `StewartPlatform` ([EXP-004](docs/experiments/EXP-004-simulation-boucle-fermee.md))
 - ✅ **Blocage cinématique levé** : butée basse des vérins à la pose neutre (d'où une hauteur de travail de 0,09 m) et limites [0 ; 2π] parasites. Suivi PyBullet de **0,28 mm / 0,044°** (critère < 0,5 mm / 0,1° atteint)
 - ✅ `PyBulletSimulator` (GUI PyBullet) délègue à `StewartPlatform` : mêmes corrections, suivi < 0,5 mm / 0,1° vérifié par `tests/validation_tests/test_pybullet_simulator.py`
-- ⬜ Porter ou archiver `scripts/create_video.py` et `examples/basic_control.py` (API `start_simmulation` de legacy)
+- ✅ `scripts/create_video.py` porté : GIF d'un scénario par rendu hors écran (`output/videos/`) ; `examples/basic_control.py` réécrit
 - Conversion URDF→SDF (corriger les limites [0 ; 2π] dans le modèle), monde Gazebo, fermeture de boucle sous Gazebo
-- Scénarios REM : approche du timon, désalignements, charge verticale
+- 🟡 Scénarios REM : approche d'attelage illustrative (`scenarios.hitch_approach`) ; désalignements réels et charge verticale à spécifier
 - Enregistrement systématique dans `results/`
 
 **Sortie** : même trajectoire rejouée sous PyBullet et Gazebo, écart de pose documenté (EXP-005).

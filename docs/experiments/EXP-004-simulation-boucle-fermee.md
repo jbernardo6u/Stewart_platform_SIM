@@ -73,6 +73,6 @@ Le critère de sortie de la Phase 4 pour PyBullet (< 0,5 mm / 0,1°) est **attei
 
 - Démo `ellipse` de `generate_demo_trajectory` : elle demande un lacet de 0 à 360°, irréalisable (courses jusqu'à 253 mm pour 190 mm disponibles). Correction du générateur en Phase 5.
 - `scripts/create_video.py`, `examples/basic_control.py` appellent `start_simmulation()` / `fit()`, qui n'existent que dans `legacy/StewartPlatform.py` : à porter ou archiver.
-- `src/simulation/pybullet_sim.py::PyBulletSimulator` n'a aucune de ces corrections : le fusionner avec `StewartPlatform` (Phase 4).
+- ~~`PyBulletSimulator` sans ces corrections~~ : fait le 2026-09-30, il délègue à `StewartPlatform.from_urdf` (`tests/validation_tests/test_pybullet_simulator.py`).
 - Corriger les limites [0 ; 2π] directement dans le URDF lors de la conversion vers Gazebo (Phase 4).
 - Étudier la souplesse résiduelle sous charge (0,2 mm) pour qu'elle ne soit pas confondue avec la compliance réelle du mécanisme (Phase 3).

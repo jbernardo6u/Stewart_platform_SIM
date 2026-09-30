@@ -46,7 +46,7 @@ Phases en cours : **1 (géométrie)**, **2 (cinématique)** et **4 (simulation)*
 - la pose neutre de l'IK correspond aux vérins en butée basse : tout mouvement se fait autour de la hauteur de travail (0,09 m) ;
 - avec gravité, la simulation garde ~0,2 à 0,3 mm d'erreur, due à la souplesse des contraintes PyBullet ;
 - la démo `ellipse` du générateur de trajectoires demande un lacet de 360°, irréalisable ;
-- `PyBulletSimulator` (GUI PyBullet) n'a pas encore la fermeture de boucle.
+- sous WSLg, la fermeture d'une fenêtre PyBullet se termine par un segfault (sans effet sur les résultats).
 
 ## Structure
 

@@ -90,6 +90,7 @@ class StewartPlatform:
         
         # Longueurs initiales des vérins : pose neutre de l'IK = configuration zéro du URDF
         self.l = self.kinematics.solve([0, 0, 0], [0, 0, 0])
+        self._neutral_lengths = np.array(self.l, dtype=float)
         self.platform_link = DEFAULT_PLATFORM_LINK
         self.platform_centre_in_link = np.array(DEFAULT_PLATFORM_CENTRE_IN_LINK)
         self.constraint_ids: List[int] = []
@@ -370,6 +371,55 @@ class StewartPlatform:
         """Monte la plateforme à mi-course des vérins, d'où tous les mouvements sont possibles."""
         self.move_to_pose([0, 0, height], [0, 0, 0], duration, **actuator_options)
     
+    def actuator_limits(self) -> np.ndarray:
+        """Course [min, max] (m) de chaque vérin, lue dans les limites des joints prismatiques du URDF."""
+        return np.array([p.getJointInfo(self.robot_id, j)[8:10] for j in self.actuator_indices])
+
+    def command_pose(self, translation: Union[List[float], np.ndarray],
+                     rotation: Union[List[float], np.ndarray]) -> bool:
+        """
+        Fixe les consignes des vérins pour une pose, sans avancer la simulation.
+
+        Variante non bloquante de ``move_to_pose`` pour les boucles temps réel (GUI) :
+        la simulation est avancée par l'appelant (``run_simulation_step``). La pose suit
+        la même convention que ``move_to_pose`` (m depuis la pose neutre, degrés).
+        Les consignes sont bornées à la course des vérins.
+
+        Returns:
+            True si la pose est atteignable, False si au moins un vérin est saturé
+        """
+        if self.robot_id is None:
+            print("❌ Robot not loaded. Call initialize_platform() first.")
+            return False
+        target = np.asarray(self.kinematics.solve(translation, rotation), dtype=float) - self._neutral_lengths
+        limits = self.actuator_limits()
+        clipped = np.clip(target, limits[:, 0], limits[:, 1])
+        for actuator_id, position in zip(self.actuator_indices, clipped):
+            p.setJointMotorControl2(bodyIndex=self.robot_id, jointIndex=actuator_id,
+                                    controlMode=p.POSITION_CONTROL, targetPosition=float(position),
+                                    force=self.actuator_max_force,
+                                    positionGain=self.actuator_position_gain)
+        self.prev_target = clipped
+        self.l = self._neutral_lengths + clipped
+        return bool(np.allclose(clipped, target))
+
+    def reset_to_neutral(self) -> None:
+        """
+        Remet instantanément toutes les articulations en configuration zéro (pose neutre,
+        vérins en butée basse), vitesses nulles, et les consignes des vérins au neutre.
+        Les contraintes de fermeture, ancrées sur cette configuration, restent satisfaites.
+        """
+        if self.robot_id is None:
+            return
+        for j in range(p.getNumJoints(self.robot_id)):
+            p.resetJointState(self.robot_id, j, 0.0, 0.0)
+        self.prev_target = np.zeros(len(self.actuator_indices))
+        self.l = self._neutral_lengths.copy()
+        for actuator_id in self.actuator_indices:
+            p.setJointMotorControl2(self.robot_id, actuator_id, p.POSITION_CONTROL, targetPosition=0.0,
+                                    force=self.actuator_max_force,
+                                    positionGain=self.actuator_position_gain)
+
     def get_current_pose(self) -> Tuple[List[float], List[float]]:
         """
         Obtient la pose actuelle de la plateforme mobile, mesurée dans la simulation.

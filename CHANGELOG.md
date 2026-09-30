@@ -4,6 +4,18 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié]
 
+### Corrigé : simulateur de la GUI PyBullet (2026-09-30, suite d'EXP-004)
+- `PyBulletSimulator` (`src/simulation/pybullet_sim.py`) simule enfin le mécanisme au lieu de téléporter le robot entier : il s'appuie sur `StewartPlatform.from_urdf` (géométrie identifiée, boucles fermées, vérins asservis) et monte à la position de travail à la connexion. API publique inchangée (mêmes méthodes, mêmes clés).
+  - `update_platform_pose` : position (mm) et rotation (°) **relatives à la position de travail**, converties en consignes de vérins bornées à leur course ; `leg_lengths` est ignoré.
+  - `get_platform_state` : pose mesurée de la plateforme (et non plus de la base) dans la même convention, vitesses du lien plateforme ; clés ajoutées `actuator_positions` et `reachable`.
+  - `reset_simulation` : configuration zéro puis retour à la position de travail. `apply_external_force` s'applique à la plateforme (et non plus à la base). `stop_recording` renvoie le vrai nom du fichier.
+  - `step_simulation(steps=1)` : paramètre optionnel ; la GUI fait 4 pas par image à 60 Hz (temps réel au lieu de ×1/4).
+- Précision vérifiée : ≤ 0,3 mm / 0,05° en mode DIRECT et en mode fenêtre.
+
+### Ajouté (2026-09-30)
+- `StewartPlatform.command_pose(translation, rotation)` : consigne non bloquante (la simulation est avancée par l'appelant), bornée à la course, renvoie False en cas de saturation. `StewartPlatform.actuator_limits()` et `StewartPlatform.reset_to_neutral()`.
+- `tests/validation_tests/test_pybullet_simulator.py` (6 tests).
+
 ### Corrigé : simulation en boucle fermée (2026-09-24, EXP-004)
 - `StewartPlatform` simule enfin une plateforme parallèle fidèle : erreur de pose de 0,28 mm / 0,044° (18 mm d'erreur auparavant).
   - `load_robot` : base fixée (`use_fixed_base=True` par défaut).

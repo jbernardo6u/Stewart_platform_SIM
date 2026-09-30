@@ -458,7 +458,7 @@ class PyBulletStewartGUI(BaseStewartGUI):
             try:
                 self.update_simulation_pose()
                 if self.simulator:
-                    self.simulator.step_simulation()
+                    self.simulator.step_simulation(steps=4)  # 4 × 1/240 s : temps réel
                 time.sleep(1/60)  # 60 FPS
             except Exception as e:
                 print(f"Simulation update error: {e}")

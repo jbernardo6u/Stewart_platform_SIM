@@ -49,7 +49,7 @@ Légende : ✅ fait · 🟡 partiel · ⬜ à faire.
 
 - ✅ Fermeture de boucle (A3), longueurs initiales (A4) et pose mesurée de la plateforme (A5) dans `StewartPlatform` ([EXP-004](docs/experiments/EXP-004-simulation-boucle-fermee.md))
 - ✅ **Blocage cinématique levé** : butée basse des vérins à la pose neutre (d'où une hauteur de travail de 0,09 m) et limites [0 ; 2π] parasites. Suivi PyBullet de **0,28 mm / 0,044°** (critère < 0,5 mm / 0,1° atteint)
-- ⬜ Fusionner `PyBulletSimulator` (sans ces corrections) dans `StewartPlatform`
+- ✅ `PyBulletSimulator` (GUI PyBullet) délègue à `StewartPlatform` : mêmes corrections, suivi < 0,5 mm / 0,1° vérifié par `tests/validation_tests/test_pybullet_simulator.py`
 - ⬜ Porter ou archiver `scripts/create_video.py` et `examples/basic_control.py` (API `start_simmulation` de legacy)
 - Conversion URDF→SDF (corriger les limites [0 ; 2π] dans le modèle), monde Gazebo, fermeture de boucle sous Gazebo
 - Scénarios REM : approche du timon, désalignements, charge verticale

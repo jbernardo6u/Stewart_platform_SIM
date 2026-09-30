@@ -74,7 +74,7 @@ flowchart TB
 | Graphe des liens | `simulation/urdf/Link_graph.txt` | ✅ Existant |
 | CAO source | `models/geometry/cad/Stewart_CAD.f3d` | ✅ Existant |
 | Adaptateur PyBullet | `src/core/platform.py::StewartPlatform` | ✅ Boucle fermée validée : **0,28 mm / 0,044°** avec gravité, 8 µm sans ([EXP-004](docs/experiments/EXP-004-simulation-boucle-fermee.md)) |
-| Ancien adaptateur | `src/simulation/pybullet_sim.py::PyBulletSimulator` | ⚠️ Sans fermeture de boucle : à fusionner dans `StewartPlatform` |
+| Interface GUI du simulateur | `src/simulation/pybullet_sim.py::PyBulletSimulator` | ✅ Délègue à `StewartPlatform.from_urdf` (caméra, enregistrement, forces, état) |
 | Identification géométrique | `src/simulation/urdf_geometry.py` | ✅ Centres des cardans extraits du URDF (EXP-001) |
 | Gazebo, mondes, launch | `simulation/gazebo/`, `simulation/worlds/`, `simulation/launch/` | ⬜ À créer (Phase 4) |
 | Visualisation | `src/gui/`, `src/simulation/matplotlib_viz.py`, `scripts/create_web_viz.py` | ✅ Existant, à découpler du modèle |
@@ -248,7 +248,7 @@ Le package ROS2 importera `models` et `controllers` comme bibliothèques Python 
 | `src/core/kinematics.py` | `models/kinematics/` + `controllers/inverse_kinematics/` | 2 |
 | `src/core/trajectory.py` | `controllers/trajectory_generation/` | 5 |
 | `src/core/platform.py` | adaptateur `simulation/` (PyBullet) | 4 |
-| `src/simulation/pybullet_sim.py` | fusion avec le précédent | 4 |
+| `src/simulation/pybullet_sim.py` | couche visualisation (délègue déjà à l'adaptateur) | 4 |
 | `src/hardware/*` | `controllers/servo_control/` + backend matériel | 5 |
 | `src/gui/*`, `matplotlib_viz` | couche visualisation | 4 |
 

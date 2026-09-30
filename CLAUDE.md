@@ -69,9 +69,8 @@ Voir `docs/reports/2026-09-24_analyse_depot.md`, section « Dette technique ». 
 - ~~A1~~ **résolu** (EXP-002) : l'IK `src` est validée contre le URDF. Utiliser `DEFAULT_ACTUATOR_INDICES` (`src/core/platform.py`), jamais l'ancien `[9, 2, 31, 45, 38, 24]` (qui n'est valable qu'avec `legacy/inv_kinematics.py`).
 - **Simulation** : utiliser `StewartPlatform.from_urdf(...)` (géométrie identifiée, EXP-001), puis `move_to_working_position()` avant tout mouvement. La pose neutre de l'IK est en **butée basse des vérins**, donc toute consigne doit être exprimée autour de `DEFAULT_WORKING_HEIGHT`. Précision validée : 0,28 mm / 0,044° (EXP-004).
 - Ne pas retirer le recentrage des limites [0 ; 2π] dans `setup_constraints()` : sans lui, le mécanisme se bloque.
-- `PyBulletSimulator` (`src/simulation/pybullet_sim.py`) n'a pas la fermeture de boucle : ne pas l'utiliser pour des résultats quantitatifs.
-- **A3** : `src/core/platform.py` ne crée pas les contraintes de fermeture de boucle.
-- **A5** : les fonctions « pose courante » renvoient la pose de la base, pas celle de la plateforme.
+- `PyBulletSimulator` (`src/simulation/pybullet_sim.py`, utilisé par la GUI PyBullet) délègue à `StewartPlatform.from_urdf` : ses poses sont en **mm / degrés relatifs à la position de travail**, et `update_platform_pose` ne fait que fixer les consignes (la simulation avance par `step_simulation`).
+- En mode GUI sous WSLg, `p.disconnect()` provoque un segfault à la fermeture de la fenêtre PyBullet (les résultats obtenus avant restent valides).
 
 Ne pas « corriger » ces points au détour d'une autre tâche : ils relèvent des Phases 2 et 4 de la roadmap et nécessitent une validation.
 

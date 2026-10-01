@@ -458,7 +458,7 @@ class PyBulletStewartGUI(BaseStewartGUI):
             try:
                 self.update_simulation_pose()
                 if self.simulator:
-                    self.simulator.step_simulation()
+                    self.simulator.step_simulation(steps=4)  # 4 × 1/240 s : temps réel
                 time.sleep(1/60)  # 60 FPS
             except Exception as e:
                 print(f"Simulation update error: {e}")
@@ -528,17 +528,13 @@ class PyBulletStewartGUI(BaseStewartGUI):
 
 
 def main():
-    """Main function to run the PyBullet GUI."""
-    root = tk.Tk()
-    app = PyBulletStewartGUI(root)
-    
-    # Handle window closing
-    root.protocol("WM_DELETE_WINDOW", app.on_closing)
-    
-    try:
-        root.mainloop()
-    except KeyboardInterrupt:
-        app.on_closing()
+    """
+    Ouvre le tableau de bord unifié (``src.gui.dashboard``), qui remplace cette interface.
+
+    La classe ``PyBulletStewartGUI`` reste disponible pour compatibilité mais n'est plus maintenue.
+    """
+    from .dashboard import main as dashboard_main
+    dashboard_main()
 
 
 if __name__ == "__main__":

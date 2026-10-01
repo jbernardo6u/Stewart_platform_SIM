@@ -2,7 +2,7 @@
 
 > Ce document décrit l'**architecture cible** et l'**état actuel** de chaque niveau.
 > Diagnostic détaillé de départ : [`docs/reports/2026-09-24_analyse_depot.md`](docs/reports/2026-09-24_analyse_depot.md).
-> Décision de transition : [`docs/decisions/ADR-0001-conserver-package-src.md`](docs/decisions/ADR-0001-conserver-package-src.md).
+> Décisions : [ADR-0001](docs/decisions/ADR-0001-conserver-package-src.md) (transition du package `src`), [ADR-0002](docs/decisions/ADR-0002-interface-commune-simulation-banc.md) (interface commune simulation/banc, proposée).
 
 ## Principes
 
@@ -74,10 +74,10 @@ flowchart TB
 | Graphe des liens | `simulation/urdf/Link_graph.txt` | ✅ Existant |
 | CAO source | `models/geometry/cad/Stewart_CAD.f3d` | ✅ Existant |
 | Adaptateur PyBullet | `src/core/platform.py::StewartPlatform` | ✅ Boucle fermée validée : **0,28 mm / 0,044°** avec gravité, 8 µm sans ([EXP-004](docs/experiments/EXP-004-simulation-boucle-fermee.md)) |
-| Ancien adaptateur | `src/simulation/pybullet_sim.py::PyBulletSimulator` | ⚠️ Sans fermeture de boucle : à fusionner dans `StewartPlatform` |
+| Interface GUI du simulateur | `src/simulation/pybullet_sim.py::PyBulletSimulator` | ✅ Délègue à `StewartPlatform.from_urdf` (caméra, enregistrement, forces, état) |
 | Identification géométrique | `src/simulation/urdf_geometry.py` | ✅ Centres des cardans extraits du URDF (EXP-001) |
 | Gazebo, mondes, launch | `simulation/gazebo/`, `simulation/worlds/`, `simulation/launch/` | ⬜ À créer (Phase 4) |
-| Visualisation | `src/gui/`, `src/simulation/matplotlib_viz.py`, `scripts/create_web_viz.py` | ✅ Existant, à découpler du modèle |
+| Visualisation | `src/gui/dashboard.py` (CustomTkinter, vue 3D rendue hors écran), `src/simulation/matplotlib_viz.py`, `scripts/create_web_viz.py` | ✅ Tableau de bord unique ; logique séparée dans `dashboard_controller.py` |
 
 **Fermeture de boucle** : l'URDF est un arbre et chaque jambe une chaîne U-P-R-U à 6 degrés de liberté (cardans idéaux, EXP-001). Cinq jambes sont fermées à l'exécution par des contraintes `JOINT_FIXED` **ancrées sur la pose relative des liens en configuration zéro** (les repères de contrainte PyBullet sont relatifs au centre de masse), entre les paires `joint_indices = [(6,16), (35,17), (49,18), (42,19), (28,20)]`, et la 6e est fermée par l'arbre lui-même. Les vérins sont les joints prismatiques `Slider_13` à `Slider_18` = jambes 1 à 6, soit `DEFAULT_ACTUATOR_INDICES = [2, 31, 45, 38, 24, 9]` (`src/core/platform.py`), dans l'ordre des sorties de l'IK. Cette correspondance est validée à 0,4° près par [EXP-002](docs/experiments/EXP-002-validation-ik-urdf.md). L'ancien ordre `[9, 2, 31, 45, 38, 24]` n'était valable qu'avec l'IK historique. Sous Gazebo, cette fermeture devra passer par SDF (`<joint>` en boucle) ou par un plugin.
 
@@ -114,7 +114,7 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 | Cinématique inverse | `src/core/kinematics.py::InverseKinematics` | ✅ Implémentée et **validée contre le URDF** (EXP-002). L'IK d'origine décrivait le mécanisme tourné de −60°. Deux géométries : paramétrique (r, γ) ou points identifiés (`from_attachment_points`) |
 | Cinématique directe (Newton-Raphson sur les 6 longueurs) | `models/kinematics/` | ⬜ À créer |
 | Jacobien, singularités, conditionnement | `models/kinematics/` | ⬜ À créer |
-| Espace de travail | `models/kinematics/` | ⬜ À créer |
+| Espace de travail | `src/core/feasibility.py` → `models/kinematics/` | 🟡 Course des vérins (EXP-007) ; cardans et singularités à faire |
 | Dérivation théorique | `models/kinematics/notebooks/analysis.ipynb`, `docs/design/README_original.md` | ✅ Existant |
 
 `L_i = t + h + R · P_i − B_i`, avec `ℓ_i = ‖L_i‖`.
@@ -133,10 +133,10 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 
 | Élément | Emplacement actuel | Cible | État |
 |---|---|---|---|
-| Génération de trajectoires | `src/core/trajectory.py` | `controllers/trajectory_generation/` | ⚠️ Purement géométrique, sans loi horaire ; bug A7 |
-| Contrôle en position | interpolation linéaire + `POSITION_CONTROL` PyBullet | `controllers/motion_control/` | ⚠️ Basique |
+| Génération de trajectoires | `src/core/scenarios.py` (lois d'ordre 5), `src/core/feasibility.py` ; historique `src/core/trajectory.py` | `controllers/trajectory_generation/` | 🟡 Scénarios vérifiés en course ; limites vitesse/accélération à faire ; `trajectory.py` : bug A7 |
+| Contrôle en position | `move_to_pose` (bloquant), `command_pose` (non bloquant) + `POSITION_CONTROL` PyBullet | `controllers/motion_control/` | 🟡 Suivi validé en simulation (0,3 à 0,4 mm RMS sur les scénarios) |
 | Contrôle en vitesse / accélération | aucun | `controllers/motion_control/` | ⬜ |
-| Asservissement des vérins | `src/hardware/motor_controller.py` (stub, P seul) | `controllers/servo_control/` | ⚠️ Stub |
+| Asservissement des vérins | `src/hardware/motor_controller.py` (stub, P seul) | `controllers/servo_control/` | ⚠️ Stub ; interface banc prévue (ADR-0002) |
 | Contrôle inverse (pose → vérins) | `InverseKinematics` | `controllers/inverse_kinematics/` | ✅ |
 | Contrôle direct (vérins → pose) | aucun | `controllers/forward_kinematics/` | ⬜ |
 
@@ -144,12 +144,12 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 
 | Élément | Emplacement | État |
 |---|---|---|
-| Mesures | `datasets/` | ⬜ Aucune donnée réelle |
-| Tests unitaires | `tests/unit_tests/` | ✅ 16 tests (IK paramétrique et à points identifiés, plateforme physique) |
-| Tests d'intégration | `tests/integration_tests/` | ⚠️ Scripts hérités ; 2 imports cassés, 1 nécessite un affichage |
-| Tests de validation | `tests/validation_tests/` | 🟡 12 tests : IK contre URDF (EXP-002), géométrie (EXP-001), suivi en boucle fermée (EXP-004) ; simulation contre réel à venir |
+| Mesures | `datasets/` | ⬜ Aucune donnée réelle ; banc disponible, inventaire [PROT-001](docs/protocols/PROT-001-inventaire-banc.md) |
+| Tests unitaires | `tests/unit_tests/` | ✅ 27 tests (IK, plateforme physique, configuration, faisabilité, scénarios) ; CI GitHub |
+| Tests d'intégration | `tests/integration_tests/` | 🟡 `test_physical_platform.py` : script manuel pour le banc (import réparé) ; scripts hérités archivés |
+| Tests de validation | `tests/validation_tests/` | 🟡 24 tests : IK contre URDF (EXP-002), géométrie (EXP-001), suivi en boucle fermée (EXP-004), simulateur, tableau de bord ; simulation contre réel à venir |
 | Analyse d'erreur | `results/`, `docs/validation/` | ⬜ |
-| Traçabilité CIR | `docs/experiments/` | ✅ Gabarit + EXP-001, EXP-002, EXP-004 |
+| Traçabilité CIR | `docs/experiments/` | ✅ Gabarit + EXP-001, EXP-002, EXP-004, EXP-007 |
 
 ## Dépendances des modules
 
@@ -159,20 +159,20 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 flowchart LR
     subgraph entry["Points d'entrée"]
         RS[run_simulation.py]
-        LA[scripts/launcher.py]
+        SC[scripts/run_*.py]
         EX[examples/*]
         WV[scripts/create_web_viz.py]
     end
     subgraph gui["src/gui"]
-        BG[base_gui]
-        SG[simple_gui]
-        AG[advanced_gui]
-        PG[pybullet_gui]
+        DB[dashboard]
+        DC[dashboard_controller]
+        BG[base_gui · simple/advanced/pybullet_gui, dépréciées]
     end
     subgraph core["src/core"]
         K[kinematics]
         P[platform]
         T[trajectory]
+        FS[feasibility · scenarios · config]
     end
     subgraph sim["src/simulation"]
         PBS[pybullet_sim]
@@ -186,14 +186,15 @@ flowchart LR
     TK{{tkinter}}
     MPL{{matplotlib}}
 
-    RS --> SG & AG & PG
-    LA --> SG & AG & PG & K & MV
+    RS --> DB & SC
+    SC --> DC
     EX --> K & T & P & PP & MCt
     WV --> P & K
-    SG & AG & PG --> BG
+    DB --> DC
+    DC --> FS & P & PBS
+    FS --> K
     BG --> K & P
-    AG --> T
-    PG --> PBS
+    PBS --> P
     P --> K
     P --> PYB
     PBS --> PYB
@@ -202,7 +203,7 @@ flowchart LR
     MV --> MPL
 ```
 
-Problème visible : `src/core/platform.py` (cœur) importe `pybullet`, et `base_gui` importe `platform`. Toute la chaîne GUI hérite donc de PyBullet, même la GUI « simple ».
+Problème visible : `src/core/platform.py` (cœur) importe `pybullet` ; la faisabilité et le tableau de bord en héritent via `StewartPlatform.from_urdf`. La séparation visée (`models` sans simulateur) relève des Phases 1 et 2.
 
 ### Cible
 
@@ -248,7 +249,7 @@ Le package ROS2 importera `models` et `controllers` comme bibliothèques Python 
 | `src/core/kinematics.py` | `models/kinematics/` + `controllers/inverse_kinematics/` | 2 |
 | `src/core/trajectory.py` | `controllers/trajectory_generation/` | 5 |
 | `src/core/platform.py` | adaptateur `simulation/` (PyBullet) | 4 |
-| `src/simulation/pybullet_sim.py` | fusion avec le précédent | 4 |
+| `src/simulation/pybullet_sim.py` | couche visualisation (délègue déjà à l'adaptateur) | 4 |
 | `src/hardware/*` | `controllers/servo_control/` + backend matériel | 5 |
 | `src/gui/*`, `matplotlib_viz` | couche visualisation | 4 |
 

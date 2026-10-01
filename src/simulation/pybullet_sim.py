@@ -2,6 +2,14 @@
 """
 PyBullet simulation interface for Stewart Platform.
 Provides 3D visualization and physics simulation capabilities.
+
+Le mécanisme est simulé par ``StewartPlatform`` (géométrie identifiée dans le URDF,
+boucles fermées, vérins asservis en position, EXP-004) : ce module n'ajoute que
+l'interface attendue par les GUI (caméra, enregistrement, forces, état).
+
+Convention des poses (``update_platform_pose`` / ``get_platform_state``) :
+position en mm et rotation [roll, pitch, yaw] en degrés, **relatives à la position de
+travail** (``DEFAULT_WORKING_HEIGHT`` au-dessus de la pose neutre, vérins à mi-course).
 """
 
 import pybullet as p
@@ -10,6 +18,18 @@ import numpy as np
 import time
 import os
 from typing import Dict, List, Tuple, Optional, Any
+
+from ..core.platform import StewartPlatform, DEFAULT_WORKING_HEIGHT
+
+
+# Point visé par la caméra : centre de la plateforme à la position de travail (m)
+CAMERA_TARGET = (0.0, 0.0, 0.3)
+CAMERA_VIEWS = {
+    'front': {'distance': 1.1, 'yaw': 0, 'pitch': -5},
+    'side': {'distance': 1.1, 'yaw': 90, 'pitch': -5},
+    'top': {'distance': 1.1, 'yaw': 0, 'pitch': -89.9},
+    'isometric': {'distance': 1.2, 'yaw': 45, 'pitch': -25},
+}
 
 
 class PyBulletSimulator:
@@ -24,20 +44,27 @@ class PyBulletSimulator:
     - Debug visualization
     """
     
-    def __init__(self, urdf_path: str, gui: bool = True):
+    def __init__(self, urdf_path: str, gui: bool = True, offscreen: bool = False):
         """
         Initialize the PyBullet simulator.
         
         Args:
             urdf_path: Path to the URDF file
-            gui: Whether to use GUI mode
+            gui: Whether to use GUI mode (separate PyBullet window)
+            offscreen: In DIRECT mode, load the EGL renderer so that ``render_image``
+                       uses the GPU (falls back to the CPU TinyRenderer if unavailable)
         """
         self.urdf_path = urdf_path
         self.gui = gui
+        self.offscreen = offscreen
+        self.egl_plugin: Optional[int] = None
         self.physics_client = None
         self.robot_id = None
         self.plane_id = None
         self.connected = False
+        self.platform: Optional[StewartPlatform] = None
+        self.working_height = DEFAULT_WORKING_HEIGHT
+        self.last_command_reachable = True
         
         # Simulation settings
         self.gravity = [0, 0, -9.81]
@@ -46,14 +73,10 @@ class PyBulletSimulator:
         # Recording
         self.recording = False
         self.recording_id = None
+        self.recording_filename: Optional[str] = None
         
         # Camera settings
-        self.camera_settings = {
-            'distance': 2.0,
-            'yaw': 45,
-            'pitch': -30,
-            'target': [0, 0, 0]
-        }
+        self.camera_settings = dict(CAMERA_VIEWS['isometric'], target=list(CAMERA_TARGET))
         
         # Debug settings
         self.debug_display = False
@@ -67,6 +90,11 @@ class PyBulletSimulator:
             True if connection successful
         """
         try:
+            if not os.path.exists(self.urdf_path):
+                raise FileNotFoundError(f"URDF file not found: {self.urdf_path}")
+            # Géométrie identifiée (ouvre et ferme son propre client PyBullet)
+            self.platform = StewartPlatform.from_urdf(self.urdf_path)
+
             if self.gui:
                 self.physics_client = p.connect(p.GUI)
             else:
@@ -77,22 +105,19 @@ class PyBulletSimulator:
             p.setGravity(*self.gravity)
             p.setTimeStep(self.time_step)
             p.setRealTimeSimulation(0)
+            if self.offscreen and not self.gui:
+                self._load_egl_renderer()   # avant les modèles, sinon ils ne sont pas rendus
             
             # Load environment
             self.plane_id = p.loadURDF("plane.urdf")
             
-            # Load robot
-            if os.path.exists(self.urdf_path):
-                start_pos = [0, 0, 0]
-                start_orientation = p.getQuaternionFromEuler([0, 0, 0])
-                self.robot_id = p.loadURDF(
-                    self.urdf_path, 
-                    start_pos, 
-                    start_orientation,
-                    flags=p.URDF_USE_INERTIA_FROM_FILE
-                )
-            else:
-                raise FileNotFoundError(f"URDF file not found: {self.urdf_path}")
+            # Robot : base fixe, boucles fermées, puis montée à la position de travail.
+            # platform.physics_client reste None : la connexion appartient au simulateur.
+            if not self.platform.load_robot():
+                raise RuntimeError(f"Failed to load URDF: {self.urdf_path}")
+            self.platform.setup_constraints()
+            self.robot_id = self.platform.robot_id
+            self._go_to_working_position()
             
             # Set initial camera
             self.set_camera_view('isometric')
@@ -104,52 +129,68 @@ class PyBulletSimulator:
             print(f"Failed to connect to PyBullet: {e}")
             return False
     
+    def _load_egl_renderer(self):
+        """Rendu GPU hors écran (greffon EGL de PyBullet) ; sans lui, rendu logiciel."""
+        try:
+            import pkgutil
+            loader = pkgutil.get_loader('eglRenderer')
+            if loader is not None:
+                plugin = p.loadPlugin(loader.get_filename(), "_eglRendererPlugin")
+                self.egl_plugin = plugin if plugin >= 0 else None
+        except Exception as e:
+            print(f"EGL renderer unavailable, using TinyRenderer: {e}")
+            self.egl_plugin = None
+
     def disconnect(self):
         """Disconnect from PyBullet."""
         if self.connected:
             if self.recording:
                 self.stop_recording()
+            if self.egl_plugin is not None:
+                p.unloadPlugin(self.egl_plugin)
+                self.egl_plugin = None
             p.disconnect()
             self.connected = False
             self.physics_client = None
             self.robot_id = None
             self.plane_id = None
+            self.platform = None
     
-    def step_simulation(self):
-        """Step the physics simulation forward."""
+    def step_simulation(self, steps: int = 1):
+        """
+        Step the physics simulation forward.
+
+        Args:
+            steps: Nombre de pas de ``time_step`` à effectuer (4 pas à 60 Hz = temps réel)
+        """
         if self.connected:
-            p.stepSimulation()
+            for _ in range(steps):
+                p.stepSimulation()
+
+    def _go_to_working_position(self):
+        """Monte la plateforme à la position de travail (calcul au plus vite, sans attente)."""
+        self.platform.move_to_working_position(self.working_height, duration=1.0,
+                                               realtime=False, settle_time=0.5)
     
     def update_platform_pose(self, pose: Dict[str, Any]):
         """
-        Update platform pose in simulation.
+        Command a platform pose: sets the actuator targets, the motion happens
+        over the following ``step_simulation`` calls.
         
         Args:
-            pose: Dictionary containing position, rotation, and leg_lengths
+            pose: Dictionary containing position (mm) and rotation (degrees), relative to
+                  the working position. ``leg_lengths`` is ignored: the actuator targets
+                  come from the identified inverse kinematics.
         """
-        if not self.connected or self.robot_id is None:
+        if not self.connected or self.platform is None:
             return
         
         try:
             position = pose.get('position', [0, 0, 0])
             rotation = pose.get('rotation', [0, 0, 0])  # degrees
-            leg_lengths = pose.get('leg_lengths', [0] * 6)
             
-            # Convert position to meters (assuming input is in mm)
-            pos_m = [p / 1000.0 for p in position]
-            
-            # Convert rotation to radians and create quaternion
-            roll_rad = np.radians(rotation[0])
-            pitch_rad = np.radians(rotation[1])
-            yaw_rad = np.radians(rotation[2])
-            orientation = p.getQuaternionFromEuler([roll_rad, pitch_rad, yaw_rad])
-            
-            # Update base position and orientation
-            p.resetBasePositionAndOrientation(self.robot_id, pos_m, orientation)
-            
-            # Update actuator lengths (if applicable)
-            # This would require knowledge of joint indices from URDF
-            # For now, we'll just update the main platform pose
+            translation = np.asarray(position, dtype=float) / 1000.0 + [0, 0, self.working_height]
+            self.last_command_reachable = self.platform.command_pose(translation, rotation)
             
         except Exception as e:
             print(f"Error updating platform pose: {e}")
@@ -175,23 +216,60 @@ class PyBulletSimulator:
         if not self.connected:
             return
         
-        views = {
-            'front': {'distance': 2.0, 'yaw': 0, 'pitch': 0, 'target': [0, 0, 0]},
-            'side': {'distance': 2.0, 'yaw': 90, 'pitch': 0, 'target': [0, 0, 0]},
-            'top': {'distance': 2.0, 'yaw': 0, 'pitch': -90, 'target': [0, 0, 0]},
-            'isometric': {'distance': 2.5, 'yaw': 45, 'pitch': -30, 'target': [0, 0, 0]}
-        }
-        
-        if view_type in views:
-            settings = views[view_type]
-            self.camera_settings.update(settings)
-            
-            p.resetDebugVisualizerCamera(
-                cameraDistance=settings['distance'],
-                cameraYaw=settings['yaw'],
-                cameraPitch=settings['pitch'],
-                cameraTargetPosition=settings['target']
-            )
+        if view_type in CAMERA_VIEWS:
+            self.camera_settings.update(CAMERA_VIEWS[view_type], target=list(CAMERA_TARGET))
+            self._apply_camera()
+
+    def orbit_camera(self, d_yaw: float = 0.0, d_pitch: float = 0.0, zoom: float = 1.0):
+        """Fait tourner la caméra autour de la plateforme (degrés) et zoome (facteur de distance)."""
+        cam = self.camera_settings
+        cam['yaw'] = (cam['yaw'] + d_yaw) % 360
+        cam['pitch'] = float(np.clip(cam['pitch'] + d_pitch, -89.9, 10.0))
+        cam['distance'] = float(np.clip(cam['distance'] * zoom, 0.4, 4.0))
+        if self.connected:
+            self._apply_camera()
+
+    def _apply_camera(self):
+        if self.gui:
+            cam = self.camera_settings
+            p.resetDebugVisualizerCamera(cameraDistance=cam['distance'], cameraYaw=cam['yaw'],
+                                         cameraPitch=cam['pitch'], cameraTargetPosition=cam['target'])
+
+    def style_scene(self, floor_rgba=(0.32, 0.36, 0.44, 1), body_rgba=(0.78, 0.80, 0.84, 1),
+                    platform_rgba=(0.30, 0.55, 1.0, 1)):
+        """Couleurs du sol, du mécanisme et de la plateforme mobile (affichage uniquement)."""
+        if not self.connected or self.platform is None:
+            return
+        p.changeVisualShape(self.plane_id, -1, rgbaColor=list(floor_rgba))
+        for link in range(-1, p.getNumJoints(self.robot_id)):
+            p.changeVisualShape(self.robot_id, link, rgbaColor=list(body_rgba))
+        p.changeVisualShape(self.robot_id, self.platform.platform_link, rgbaColor=list(platform_rgba))
+        self._body_rgba = list(body_rgba)
+
+    def set_actuator_colors(self, colors):
+        """Couleur RGBA de la tige de chaque vérin (ex. rouge si saturé)."""
+        if not self.connected or self.platform is None:
+            return
+        for joint, rgba in zip(self.platform.actuator_indices, colors):
+            p.changeVisualShape(self.robot_id, joint, rgbaColor=list(rgba))
+
+    def render_image(self, width: int = 960, height: int = 600) -> Optional[np.ndarray]:
+        """
+        Image RGB (height, width, 3, uint8) de la scène vue par la caméra courante.
+
+        Rendu GPU si le greffon EGL est chargé (``offscreen=True``), sinon rendu logiciel
+        (plus lent : réduire la taille).
+        """
+        if not self.connected:
+            return None
+        cam = self.camera_settings
+        view = p.computeViewMatrixFromYawPitchRoll(cam['target'], cam['distance'], cam['yaw'],
+                                                   cam['pitch'], 0, 2)
+        proj = p.computeProjectionMatrixFOV(45, width / height, 0.05, 10)
+        renderer = p.ER_BULLET_HARDWARE_OPENGL if self.egl_plugin is not None else p.ER_TINY_RENDERER
+        _, _, rgba, _, _ = p.getCameraImage(width, height, view, proj, renderer=renderer,
+                                            shadow=1, lightDirection=[1, 1, 2])
+        return np.reshape(np.asarray(rgba, dtype=np.uint8), (height, width, 4))[:, :, :3]
     
     def set_debug_display(self, enabled: bool):
         """
@@ -246,6 +324,7 @@ class PyBulletSimulator:
                 filename
             )
             self.recording = True
+            self.recording_filename = filename
             return True
             
         except Exception as e:
@@ -263,8 +342,9 @@ class PyBulletSimulator:
             try:
                 p.stopStateLogging(self.recording_id)
                 self.recording = False
-                filename = f"stewart_simulation_{int(time.time())}.mp4"
+                filename = self.recording_filename
                 self.recording_id = None
+                self.recording_filename = None
                 return filename
             except Exception as e:
                 print(f"Failed to stop recording: {e}")
@@ -273,30 +353,31 @@ class PyBulletSimulator:
     
     def get_platform_state(self) -> Dict[str, Any]:
         """
-        Get current platform state from simulation.
+        Get current state of the moving platform, measured in the simulation.
         
         Returns:
-            Dictionary with position, orientation, and velocities
+            Dictionary with position (mm) and rotation (degrees) relative to the working
+            position (same convention as ``update_platform_pose``), linear (m/s) and
+            angular (rad/s) velocities of the platform link, actuator positions (m) and
+            whether the last commanded pose was reachable
         """
-        if not self.connected or self.robot_id is None:
+        if not self.connected or self.platform is None:
             return {}
         
         try:
-            pos, orn = p.getBasePositionAndOrientation(self.robot_id)
-            lin_vel, ang_vel = p.getBaseVelocity(self.robot_id)
-            
-            # Convert position back to mm
-            pos_mm = [p * 1000.0 for p in pos]
-            
-            # Convert quaternion to euler angles (degrees)
-            euler_rad = p.getEulerFromQuaternion(orn)
-            euler_deg = [np.degrees(angle) for angle in euler_rad]
+            position, rotation = self.platform.get_current_pose()
+            pos_mm = ((np.array(position) - [0, 0, self.working_height]) * 1000.0).tolist()
+            link_state = p.getLinkState(self.robot_id, self.platform.platform_link,
+                                        computeLinkVelocity=1)
             
             return {
                 'position': pos_mm,
-                'rotation': euler_deg,
-                'linear_velocity': list(lin_vel),
-                'angular_velocity': list(ang_vel)
+                'rotation': list(rotation),
+                'linear_velocity': list(link_state[6]),
+                'angular_velocity': list(link_state[7]),
+                'actuator_positions': [p.getJointState(self.robot_id, j)[0]
+                                       for j in self.platform.actuator_indices],
+                'reachable': self.last_command_reachable
             }
             
         except Exception as e:
@@ -338,28 +419,24 @@ class PyBulletSimulator:
             return []
     
     def reset_simulation(self):
-        """Reset simulation to initial state."""
-        if self.connected and self.robot_id is not None:
-            # Reset platform to initial pose
-            start_pos = [0, 0, 0]
-            start_orientation = p.getQuaternionFromEuler([0, 0, 0])
-            p.resetBasePositionAndOrientation(self.robot_id, start_pos, start_orientation)
-            
-            # Reset velocities
-            p.resetBaseVelocity(self.robot_id, [0, 0, 0], [0, 0, 0])
+        """Reset simulation: neutral configuration, then back to the working position."""
+        if self.connected and self.platform is not None:
+            self.platform.reset_to_neutral()
+            self.last_command_reachable = True
+            self._go_to_working_position()
     
     def apply_external_force(self, force: List[float], position: List[float]):
         """
-        Apply external force to the platform.
+        Apply external force to the moving platform, for the next simulation step.
         
         Args:
-            force: [x, y, z] force vector in Newtons
-            position: [x, y, z] position to apply force (local coordinates)
+            force: [x, y, z] force vector in Newtons (world frame)
+            position: [x, y, z] application point (world frame, m)
         """
-        if self.connected and self.robot_id is not None:
+        if self.connected and self.platform is not None:
             p.applyExternalForce(
                 self.robot_id, 
-                -1,  # Apply to base link
+                self.platform.platform_link,
                 force, 
                 position, 
                 p.WORLD_FRAME
@@ -407,19 +484,18 @@ def main():
     if sim.connect():
         print("Simulator connected successfully")
         
-        # Test pose update
-        test_pose = {
-            'position': [10, 10, 20],
-            'rotation': [5, 5, 10],
-            'leg_lengths': [100] * 6
-        }
-        
+        # Test pose update (mm / degrees, relative to the working position)
+        test_pose = {'position': [10, 10, 20], 'rotation': [5, 5, 10]}
         sim.update_platform_pose(test_pose)
         
         # Run simulation for a few seconds
         for i in range(1000):
             sim.step_simulation()
             time.sleep(1/240)
+        
+        state = sim.get_platform_state()
+        print(f"Platform pose: {np.round(state['position'], 2)} mm, "
+              f"{np.round(state['rotation'], 2)} deg")
         
         sim.disconnect()
         print("Simulator test completed")

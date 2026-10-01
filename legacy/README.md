@@ -9,6 +9,10 @@ Conservé pour référence et traçabilité. **Ne pas importer depuis le code ac
 | `motor_controller.py`, `hardware_config.py`, `physical_stewart.py` | Prototypes matériel | `src/hardware/*` (copies identiques ou quasi identiques) |
 | `Stewart_original/` | Ex-`Stewart/` : URDF, maillages, `hello_bullet.py` upstream | `simulation/urdf`, `simulation/meshes` (contenu identique ; ici les chemins de maillages sont restés `meshes/…`) |
 | `archives/Stewart.zip` | Archive upstream du dossier `Stewart/` (+ `__MACOSX`) | idem |
+| `scripts/launcher.py`, `gui_launcher.py`, `quick_simulation.py`, `simulation_manager.py` | Lanceurs redondants (2025), archivés le 2026-09-30 | `run_simulation.py` (5 modes), `src/gui/dashboard.py` |
+| `scripts/migrate_imports.py`, `scripts/setup_project.py` | Outils ponctuels de migration (2025) | — |
+| `scripts/create_video.py`, `examples/basic_control.py` | API `start_simmulation` de 2023 | `scripts/create_video.py`, `examples/basic_control.py` réécrits |
+| `tests/integration_tests/test_no_gui.py`, `test_pybullet_gui.py` | Tests manuels hérités | `tests/validation_tests/` |
 
 ⚠️ `inv_kinematics.py` est la **référence** pour l'arbitrage de l'anomalie A1 (Phase 2). Ne pas supprimer.
 

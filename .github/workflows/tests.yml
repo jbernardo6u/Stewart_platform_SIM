@@ -1,0 +1,22 @@
+# Tests sans affichage (PyBullet en mode DIRECT) à chaque push et pull request.
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+      - name: Tests unitaires et de validation
+        run: python -m pytest -q tests/unit_tests tests/validation_tests

@@ -8,6 +8,6 @@
 
 Le URDF référence les maillages en `../meshes/*.stl`.
 
-Pièges connus (EXP-004) : configuration zéro = vérins en butée basse ; 11 articulations passives limitées à [0 ; 2π], recentrées à l'exécution par `StewartPlatform.setup_constraints()`. L'adaptateur PyBullet est dans `src/core/platform.py` et `src/simulation/pybullet_sim.py`.
+Pièges connus (EXP-004) : configuration zéro = vérins en butée basse ; 11 articulations passives limitées à [0 ; 2π], recentrées à l'exécution par `StewartPlatform.setup_constraints()`. L'adaptateur PyBullet est dans `src/core/platform.py` (mécanisme) et `src/simulation/pybullet_sim.py` (interface des GUI : caméra, rendu hors écran EGL, état, forces).
 
 Fermeture de boucle : voir [ARCHITECTURE.md](../ARCHITECTURE.md#niveau-1--simulation).

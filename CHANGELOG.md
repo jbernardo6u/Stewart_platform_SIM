@@ -4,6 +4,61 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié]
 
+### Modifié : lisibilité et préparation du banc (2026-09-30, suite)
+- Tableau de bord : le graphe « écart consigne/mesure » (deux courbes sur deux axes superposés, difficile à lire) devient deux graphes empilés, **écart de position (mm)** et **écart d'orientation (°)**, chacun avec sa valeur courante, une légende explicative et une ligne pointillée à la précision validée (`gui.dashboard.tracking_criteria`, EXP-004).
+- `scripts/create_video.py` porté : GIF d'un scénario par rendu hors écran (l'ancienne version appelait `start_simmulation`, inexistante) ; ancienne version dans `legacy/scripts/`.
+- `examples/basic_control.py` réécrit (IK, faisabilité, simulation) ; ancienne version dans `legacy/examples/`.
+- `tests/integration_tests/test_physical_platform.py` : import réparé (`src.hardware.physical_platform`), conservé pour le banc.
+- Documentation remise à jour : README (état, avancement, API, configuration, tests), RESEARCH (état de chaque verrou), ARCHITECTURE, ROADMAP, CLAUDE.md, README de `docs/`, `results/`, `controllers/`, `models/`, `simulation/`, `tests/`, QUICK_START.
+
+### Ajouté (2026-09-30, suite)
+- [ADR-0002](docs/decisions/ADR-0002-interface-commune-simulation-banc.md) (proposée) : contrat commun simulation/banc, pour rejouer les mêmes consignes.
+- [PROT-001](docs/protocols/PROT-001-inventaire-banc.md) : grille d'inventaire et de caractérisation du banc, face aux valeurs du modèle.
+
+### Archivé (2026-09-30, suite)
+- `tests/integration_tests/test_no_gui.py`, `test_pybullet_gui.py` → `legacy/tests/integration_tests/` (imports obsolètes, fenêtre PyBullet ; couverts par les tests de validation).
+- `scripts/migrate_imports.py`, `scripts/setup_project.py` → `legacy/scripts/` (outils ponctuels de la migration de 2025).
+
+### Ajouté : tableau de bord et modes de simulation (2026-09-30)
+- **Tableau de bord unique** `src/gui/dashboard.py` (CustomTkinter, thèmes sombre et clair), qui remplace les GUI Simple, Advanced et PyBullet : vue 3D de la simulation rendue hors écran dans la fenêtre (EGL, repli logiciel ; glisser et molette), consigne 6 axes relative à la position de travail, course de chaque vérin avec alerte de saturation (aussi en rouge dans la vue 3D), inclinaison des jambes, écart consigne/mesure en direct, scénarios vérifiés avant exécution avec bilan RMS et maximal, arrêt d'urgence. Logique testable sans affichage dans `src/gui/dashboard_controller.py`.
+- `src/core/feasibility.py` : positions des vérins, vérification de la course d'une pose ou d'une trajectoire, inclinaison des jambes.
+- `src/core/scenarios.py` : scénarios à lois horaires d'ordre 5 (approche d'attelage, carré, balayage d'orientation, sinusoïdes 6 axes), tous réalisables.
+- `src/core/config.py` : chargement de `configurations/platform_config.yaml` (aucun code ne le lisait).
+- `PyBulletSimulator` : paramètre optionnel `offscreen`, méthodes `render_image`, `orbit_camera`, `style_scene`, `set_actuator_colors` ; caméras recentrées sur la plateforme.
+- `scripts/run_trajectory.py` (rapport de suivi par scénario), `scripts/run_validation.py` (tests + campagnes, bilan).
+- EXP-007 (espace de travail limité par la course) : script, résultats `results/kinematics/exp007_*`, fiche.
+- Configuration : `platform.actuator_stroke`, `gui.dashboard.limits` et `render_size`.
+- CI GitHub : `.github/workflows/tests.yml`.
+- Tests : `test_feasibility_scenarios.py` (11), `test_dashboard_controller.py` (6).
+- Dépendances : `customtkinter`, `pillow`.
+
+### Modifié (2026-09-30)
+- `run_simulation.py` : cinq modes distincts (tableau de bord, rapport de trajectoires, espace de travail, validation, diagnostic) au lieu de neuf entrées redondantes ; accepte le numéro du mode en argument.
+- `main()` de `simple_gui`, `advanced_gui` et `pybullet_gui` : ouvrent le tableau de bord (signatures inchangées ; classes conservées, dépréciées).
+- `examples/trajectory_demo.py --type spiral` : lacet oscillant ±20° au lieu d'un tour de 360° (60 % des points hors course).
+- `setup.py` : `stewart-gui` → tableau de bord ; entrées `stewart-test` et `stewart-demo` retirées (modules inexistants).
+- `scripts/system_check.py` : vérifie `pyyaml`, `pybullet`, `customtkinter`, `pillow` et le tableau de bord ; recommande les nouveaux points d'entrée.
+- Documentation : `docs/guides/QUICK_START.md` réécrit, README, CLAUDE.md, ARCHITECTURE, ROADMAP (priorités révisées avec le banc réel).
+
+### Corrigé (2026-09-30)
+- Longueurs de vérins affichées par les GUI historiques (`BaseStewartGUI.update_kinematics`) : les millimètres étaient passés comme des mètres (vérins de « 30 m ») et les angles convertis en radians alors que l'IK attend des degrés ; la position de travail n'était pas prise en compte.
+
+### Archivé (2026-09-30)
+- `scripts/launcher.py`, `gui_launcher.py`, `quick_simulation.py`, `simulation_manager.py` → `legacy/scripts/` : lanceurs redondants (le dernier pointait vers un test supprimé).
+- `docs/guides/GUIDE_UTILISATION.md` → `docs/reports/history/` : il décrivait des scripts de 2025 qui n'existent plus à la racine.
+
+### Corrigé : simulateur de la GUI PyBullet (2026-09-30, suite d'EXP-004)
+- `PyBulletSimulator` (`src/simulation/pybullet_sim.py`) simule enfin le mécanisme au lieu de téléporter le robot entier : il s'appuie sur `StewartPlatform.from_urdf` (géométrie identifiée, boucles fermées, vérins asservis) et monte à la position de travail à la connexion. API publique inchangée (mêmes méthodes, mêmes clés).
+  - `update_platform_pose` : position (mm) et rotation (°) **relatives à la position de travail**, converties en consignes de vérins bornées à leur course ; `leg_lengths` est ignoré.
+  - `get_platform_state` : pose mesurée de la plateforme (et non plus de la base) dans la même convention, vitesses du lien plateforme ; clés ajoutées `actuator_positions` et `reachable`.
+  - `reset_simulation` : configuration zéro puis retour à la position de travail. `apply_external_force` s'applique à la plateforme (et non plus à la base). `stop_recording` renvoie le vrai nom du fichier.
+  - `step_simulation(steps=1)` : paramètre optionnel ; la GUI fait 4 pas par image à 60 Hz (temps réel au lieu de ×1/4).
+- Précision vérifiée : ≤ 0,3 mm / 0,05° en mode DIRECT et en mode fenêtre.
+
+### Ajouté (2026-09-30)
+- `StewartPlatform.command_pose(translation, rotation)` : consigne non bloquante (la simulation est avancée par l'appelant), bornée à la course, renvoie False en cas de saturation. `StewartPlatform.actuator_limits()` et `StewartPlatform.reset_to_neutral()`.
+- `tests/validation_tests/test_pybullet_simulator.py` (6 tests).
+
 ### Corrigé : simulation en boucle fermée (2026-09-24, EXP-004)
 - `StewartPlatform` simule enfin une plateforme parallèle fidèle : erreur de pose de 0,28 mm / 0,044° (18 mm d'erreur auparavant).
   - `load_robot` : base fixée (`use_fixed_base=True` par défaut).

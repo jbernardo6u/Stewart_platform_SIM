@@ -72,7 +72,8 @@ class SystemChecker:
         """Vérifier les modules Python requis."""
         required_modules = [
             'numpy', 'tkinter', 'threading', 'json', 'pathlib',
-            'math', 'time', 'subprocess', 'argparse'
+            'math', 'time', 'subprocess', 'argparse',
+            'yaml', 'pybullet', 'matplotlib', 'customtkinter', 'PIL'
         ]
         
         all_present = True
@@ -221,7 +222,7 @@ class SystemChecker:
     
     def check_gui_availability(self):
         """Vérifier la disponibilité des GUIs."""
-        guis = ['simple_gui', 'advanced_gui', 'pybullet_gui']
+        guis = ['dashboard', 'simple_gui', 'advanced_gui', 'pybullet_gui']
         available_guis = []
         
         for gui in guis:
@@ -287,9 +288,9 @@ class SystemChecker:
             print("   🔧 System needs attention. Please fix failed checks before using.")
         
         print(f"\n💡 NEXT STEPS:")
-        print(f"   • Run 'python3 scripts/simulation_manager.py' for simulation access")
-        print(f"   • Try 'python3 scripts/quick_simulation.py' for quick demos")
-        print(f"   • Use 'python3 scripts/launcher.py' for full project access")
+        print(f"   • Run 'python3 run_simulation.py' (menu des modes de simulation)")
+        print(f"   • Open the dashboard: 'python3 -m src.gui.dashboard'")
+        print(f"   • Validate: 'python3 scripts/run_validation.py'")
 
 
 def main():

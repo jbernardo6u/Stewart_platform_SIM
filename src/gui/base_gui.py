@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Optional, Dict, Any
 
 from ..core.kinematics import InverseKinematics
-from ..core.platform import StewartPlatform
+from ..core.platform import StewartPlatform, DEFAULT_WORKING_HEIGHT
 
 
 class BaseStewartGUI(ABC):
@@ -181,22 +181,11 @@ class BaseStewartGUI(ABC):
         """Update inverse kinematics calculation."""
         try:
             with self.update_lock:
-                # Convert degrees to radians for kinematics
-                roll_rad = np.radians(self.current_rotation[0])
-                pitch_rad = np.radians(self.current_rotation[1]) 
-                yaw_rad = np.radians(self.current_rotation[2])
-                
-                # Calculate leg lengths
-                pose = [
-                    self.current_position[0],  # X (mm)
-                    self.current_position[1],  # Y (mm)
-                    self.current_position[2],  # Z (mm)
-                    roll_rad,                  # Roll (rad)
-                    pitch_rad,                 # Pitch (rad)
-                    yaw_rad                    # Yaw (rad)
-                ]
-                
-                self.current_leg_lengths = self.kinematics.calculate(pose)
+                # Curseurs : mm et degrés relatifs à la position de travail ;
+                # solve() attend des mètres depuis la pose neutre et des degrés.
+                translation = np.asarray(self.current_position, dtype=float) / 1000.0
+                translation = translation + [0, 0, DEFAULT_WORKING_HEIGHT]
+                self.current_leg_lengths = self.kinematics.solve(translation, self.current_rotation)
                 
         except Exception as e:
             messagebox.showerror("Kinematics Error", f"Error calculating leg lengths: {str(e)}")

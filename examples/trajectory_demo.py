@@ -66,8 +66,9 @@ def demonstrate_trajectory(trajectory_type: str = 'ellipse', use_simulation: boo
         x, y, z = generate_spiral_trajectory(num_points=30, radius=0.005, height=0.002)
         translations = np.column_stack([x, y, z])
         
-        # Rotation progressive autour de Z
-        angles = np.linspace(0, 360, len(translations))
+        # Oscillation de lacet ±20° (un tour complet de 360° dépasse la course des vérins :
+        # 60 % des points saturaient, voir src.core.feasibility)
+        angles = 20 * np.sin(np.linspace(0, 2 * np.pi, len(translations)))
         rotations = np.column_stack([
             np.zeros(len(translations)),  # Roll
             np.zeros(len(translations)),  # Pitch

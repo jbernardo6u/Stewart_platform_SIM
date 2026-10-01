@@ -5,3 +5,5 @@ numpy>=1.21
 matplotlib>=3.5
 pybullet>=3.2
 pyyaml>=5.4
+customtkinter>=5.2   # tableau de bord (src/gui/dashboard.py)
+pillow>=9.0          # image de la vue 3D du tableau de bord

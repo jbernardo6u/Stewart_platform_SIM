@@ -96,9 +96,7 @@ setup(
     # Scripts en ligne de commande
     entry_points={
         'console_scripts': [
-            'stewart-gui=scripts.launcher:main',
-            'stewart-test=scripts.run_tests:main',
-            'stewart-demo=examples.basic_control:main',
+            'stewart-gui=src.gui.dashboard:main',
         ],
     },
     

@@ -17,6 +17,7 @@ Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la 
 | [RESEARCH.md](RESEARCH.md) | Verrous scientifiques (traçabilité CIR) |
 | [CLAUDE.md](CLAUDE.md) | Règles d'ingénierie pour les contributeurs et les agents |
 | [CHANGELOG.md](CHANGELOG.md) | Historique des changements |
+| [NEXT_STEPS.md](NEXT_STEPS.md) | **Reprise du travail** : état, mesures et questions en attente, prochaines tâches |
 | [docs/guides/QUICK_START.md](docs/guides/QUICK_START.md) | Prise en main : les 5 modes, le tableau de bord, les scénarios |
 | [docs/experiments/](docs/experiments/README.md) | Fiches d'expérimentation (registre CIR) |
 | [docs/decisions/](docs/decisions/) | Décisions d'architecture (ADR) |

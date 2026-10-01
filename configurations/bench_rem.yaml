@@ -65,8 +65,9 @@ camera:
   cy: 262.8604
   near_clip: 0.01
   far_clip: 5.0
-  # HYPOTHÈSE : caméra embarquée sur la plateforme (eye-in-hand), au bord +x, axe optique
-  # horizontal vers +x de la plateforme (« plan image perpendiculaire à la base »).
+  # Caméra embarquée sur la plateforme (eye-in-hand) : confirmé par l'utilisateur le 2026-10-01.
+  # HYPOTHÈSE : position au bord +x, axe optique horizontal vers +x de la plateforme (« plan
+  # image perpendiculaire à la base ») ; distance et angles non consignés, à mesurer.
   # Repère du corps caméra Gazebo : x = axe optique, y à gauche, z en haut.
   mount_position_in_platform: [0.05, 0.0, 0.02]   # m, dans le repère plateforme {P}
   mount_rpy_in_platform_deg: [0.0, 0.0, 0.0]

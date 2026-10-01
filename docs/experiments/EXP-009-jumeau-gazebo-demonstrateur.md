@@ -93,7 +93,7 @@ H1, H2 et H3 sont validées. Le jumeau Gazebo exécute le logiciel réel du banc
 ## Travaux restants
 
 - Mesurer sur le banc les hypothèses de bench_rem.yaml : montage de la caméra, position du marqueur à l'alignement, vitesse des vérins, montage de l'IMU (`digital_twin_plan.md` §5, PROT-001). Recherche documentaire du 2026-10-01 : aucune de ces valeurs n'est consignée.
-- **Montage de la caméra à confirmer** : les documents décrivent une caméra tenue par un bras articulé, face à la zone de capture, avec la caméra et le marqueur sur deux supports circulaires distincts. Le jumeau suit l'ADR-0002 du banc (2026-09-24), qui parle d'une caméra embarquée sur la plateforme. `calib_ext3.npz` (date inconnue) donne une caméra à environ 50 cm de son repère de référence, inclinée d'environ 37° (rotation de 143° autour de x).
+- **Montage de la caméra** : caméra embarquée sur la plateforme, confirmé le 2026-10-01 (les documents qui décrivent une caméra sur bras articulé concernent un autre montage). Restent à mesurer : la position et l'orientation par rapport au centre de la plateforme. `calib_ext3.npz` (caméra à environ 50 cm de son repère, inclinée d'environ 37°) ne décrit donc pas ce montage, ou alors seulement sa relation au marqueur fixe 24.
 - Firmware : `pwm_max` = 230 se trouve dans la zone où le banc signale un retour lent faute de couple (210 à 240). Modéliser l'asymétrie sortie/retour, et proposer au banc de borner le PWM à 200.
 - Rendre la distorsion de la caméra (`calib_int.npz`) et calibrer le bruit caméra et IMU sur des enregistrements du mode Acquisition.
 - Remonter D13 et D14 au dépôt du banc ; tester les corrections de D1, D2, D3 et la loi incrémentale dans le jumeau (critère de convergence en boucle fermée).

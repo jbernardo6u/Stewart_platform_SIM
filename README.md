@@ -30,7 +30,7 @@ Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la 
 | 1 · Simulation | ✅ PyBullet en boucle fermée **validé : 0,28 mm / 0,044°** (EXP-004) ; ✅ **jumeau Gazebo du démonstrateur** : logiciel ROS 2 du banc exécuté sans modification, caméra rendue (EXP-009, [guide](docs/guides/GAZEBO_BANC_REM.md)) ; **prototype**, scène à refaire dans Demonstrateur_REM ; ⬜ Gazebo de la plateforme seule |
 | 2 · Géométrie | ✅ Géométrie réelle identifiée dans le URDF (EXP-001) ; repères à formaliser |
 | 3 · Cinématique | 🟡 IK **validée contre le URDF** (EXP-002) ; espace de travail limité par la course (EXP-007) ; **FK, jacobien et singularités** (EXP-008) |
-| 4 · Dynamique | ⬜ À créer |
+| 4 · Dynamique | 🟡 **Statique** des vérins : banc couché ×8 à 12 par rapport au montage debout (EXP-010) ; dynamique à faire |
 | 5 · Contrôle | 🟡 Scénarios à lois horaires d'ordre 5, vérification de la course, tableau de bord de pilotage ; limites vitesse/accélération à faire |
 | 6 · Validation | 🟡 96 tests automatisés (unitaires et de validation), CI GitHub ; aucune mesure réelle encore (plateforme imprimée en 3D à inventorier, banc complet gelé) |
 

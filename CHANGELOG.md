@@ -4,6 +4,12 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié]
 
+### Ajouté : statique des vérins (Phase 3, 2026-10-01)
+- `src/core/statics.py` : efforts axiaux `f = −J⁻ᵀ·w` pour un torseur au centre de la plateforme, torseur du poids d'une charge (centre de gravité dans {P}), pesanteur pour une plateforme couchée (angle de montage autour de la normale).
+- `bench_rem.yaml` : section `statics` (masse, centre de gravité, angle de montage, effort disponible, espace de compensation, plages de dimensions), entièrement en hypothèses à mesurer.
+- [EXP-010](docs/experiments/EXP-010-statique-plateforme-couchee.md) : banc couché, ×8 à 12 par rapport au montage debout ; 15,8 N à home et jusqu'à 25 N dans l'espace de compensation pour 1 kg ; 1,3 kg admissibles pour 30 N ; une base de 13 à 15 cm divise les efforts par 2,3. Script `scripts/experiments/exp010_statics_lying.py`, ajouté à `run_validation.py`.
+- 6 tests unitaires (`tests/unit_tests/test_statics.py`).
+
 ### Documentation : périmètre des dépôts (2026-10-01)
 - [ADR-0004](docs/decisions/ADR-0004-perimetre-des-depots.md) (acceptée) : ce dépôt traite de la plateforme de Stewart seule ; le banc d'attelage complet et son jumeau Gazebo se développent dans Demonstrateur_REM ; le jumeau du banc présent ici est un prototype à migrer.
 - [Rapport du 2026-10-01](docs/reports/2026-10-01_perimetre_et_suite.md) : rôles des dépôts, état, contradiction caméra fixe/embarquée, repères proposés pour la plateforme couchée, informations à mesurer, suite pour chaque dépôt.

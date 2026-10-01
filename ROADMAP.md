@@ -10,7 +10,7 @@ Ce dépôt traite de la **plateforme de Stewart seule** ; le banc d'attelage com
 1. ✅ Cinématique complète (FK, jacobien, singularités, EXP-008).
 2. ⬜ **Inventaire de la plateforme imprimée en 3D** (PROT-001) et essais réels si son électronique le permet (ADR-0002 à réviser).
 3. ⬜ **Gazebo de la plateforme seule**, en réutilisant l'approche du prototype EXP-009 (FK, rendu), paramétré par sa géométrie.
-4. ⬜ **Statique en position couchée** (Phase 3, V-4) : efforts `f = J⁻ᵀ·w` sur l'espace de travail, masse et centre de gravité en paramètres. C'est la réponse au verrou de couple du banc.
+4. ✅ **Statique en position couchée** ([EXP-010](docs/experiments/EXP-010-statique-plateforme-couchee.md)) : ×8 à 12 par rapport au montage debout, ≤ 25 N pour 1 kg ; la statique seule n'explique pas le blocage (masse, effort disponible et efforts transverses à mesurer) ; une base plus large est le meilleur levier.
 5. ⬜ Fusion et migration du prototype de jumeau du banc vers Demonstrateur_REM, où se poursuivent : scène corrigée (caméra fixe, marqueur sur la plaque, plateforme couchée), rail d'approche, vérins limités en effort, corrections D1–D3, D13, D14.
 
 ## Priorités pour finaliser (révisées le 2026-09-30, banc physique disponible ; remplacées par la section ci-dessus)
@@ -66,10 +66,11 @@ Le banc existe : les phases matérielles (6 et 7) ne sont plus un horizon lointa
 
 **Sortie** : erreur aller-retour IK→FK < 1 µm ; IK validée contre PyBullet < 0,1 mm (EXP-002).
 
-## Phase 3 : Caractérisation dynamique ⬜
+## Phase 3 : Caractérisation dynamique 🟡
 
 - Modèle de masse et d'inertie (plateforme + charge d'attelage) depuis le URDF et la CAO
-- Statique : efforts dans les vérins `f = J⁻ᵀ w` sur l'espace de travail
+- ✅ Statique : efforts dans les vérins `f = −J⁻ᵀ w` (`src/core/statics.py`). Banc couché ([EXP-010](docs/experiments/EXP-010-statique-plateforme-couchee.md)) : ×8 à 12 par rapport au montage debout, jusqu'à 25 N par vérin pour 1 kg ; une base de 13 à 15 cm divise les efforts par 2,3
+- ⬜ Masse des vérins, efforts transverses (flexion, frottement) ; validation statique contre une simulation physique
 - Dynamique inverse (Newton-Euler) ; comparaison avec PyBullet
 - Première étude énergétique : puissance et énergie par trajectoire type
 

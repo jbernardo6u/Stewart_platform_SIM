@@ -92,6 +92,35 @@ imu:
   noise_orientation_deg: 0.0    # bruits à calibrer sur les enregistrements du mode Acquisition
   noise_gyro_deg_s: 0.0
 
+# --- Statique (EXP-010) : charge embarquée et montage ---
+# Rien n'est mesuré : on balaie des plages d'hypothèses, sans retenir de valeur unique.
+statics:
+  mounting: "lying"              # banc d'après photos : plateforme couchée, normale horizontale
+  # Hypothèse de conception d'origine : 0,5 à 1 kg embarqués, 30 N par vérin. À MESURER.
+  payload_mass_kg: [0.5, 1.0]
+  # Centre de gravité de la partie mobile, le long de la normale z_P, depuis le centre des
+  # attaches de la plaque (disque Space Lock et marqueur en avant de la plaque). À MESURER.
+  centre_of_mass_offsets_m: [0.0, 0.02, 0.04, 0.06]
+  # Angle de montage autour de la normale (quel vérin est en haut) : À MESURER ; on balaie
+  # tous les angles et on retient le pire cas.
+  mount_angle_step_deg: 5
+  actuator_force_limit_n: 30.0   # hypothèse de conception, effort disponible non mesuré
+  # Espace de travail de la phase de compensation (écarts résiduels après l'approche par le rail).
+  # HYPOTHÈSE : plages à préciser avec le cahier des charges de l'attelage. Translations
+  # relatives à la pose à mi-course (codeurs à 5 cm), z selon la normale.
+  workspace_samples: 4000
+  workspace_ranges:
+    x_m: [-0.02, 0.02]
+    y_m: [-0.02, 0.02]
+    z_m: [-0.04, 0.04]
+    roll_deg: [-10, 10]
+    pitch_deg: [-10, 10]
+    yaw_deg: [-15, 15]
+  # Étude de sensibilité aux dimensions (aide à la conception d'une version qui tienne)
+  design_sweep:
+    radius_base_m: [0.06, 0.075, 0.09, 0.11, 0.13, 0.15]
+    home_height_m: [0.12, 0.15, 0.185, 0.22, 0.25]
+
 # --- Gazebo ---
 gazebo:
   world_name: "rem_bench"

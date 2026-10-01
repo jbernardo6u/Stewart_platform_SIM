@@ -25,6 +25,7 @@ STEPS = [
     ("EXP-004 suivi en boucle fermée", [sys.executable, 'scripts/experiments/exp004_closed_loop_tracking.py']),
     ("EXP-007 espace de travail (course)", [sys.executable, 'scripts/experiments/exp007_workspace_stroke.py']),
     ("EXP-008 cinématique directe", [sys.executable, 'scripts/experiments/exp008_forward_kinematics.py']),
+    ("EXP-010 statique, banc couché", [sys.executable, 'scripts/experiments/exp010_statics_lying.py']),
 ]
 
 

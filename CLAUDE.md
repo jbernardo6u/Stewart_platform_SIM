@@ -8,6 +8,10 @@ Projet REM : système autonome d'attelage et de désattelage de remorque.
 
 La plateforme Stewart (hexapode 6-6 à vérins linéaires) est l'actionneur principal. Elle assure l'alignement précis entre le véhicule tracteur et la remorque. Ce dépôt contient son **jumeau numérique** : modèles géométrique, cinématique et dynamique, simulation, contrôle et validation contre le réel.
 
+## Au démarrage d'une session
+
+Lire d'abord [NEXT_STEPS.md](NEXT_STEPS.md) : état, mesures et questions en attente, prochaines tâches. Le mettre à jour en fin de session.
+
 ## Périmètre (ADR-0004)
 
 - **Ce dépôt** : la plateforme de Stewart **seule** (modèles, PyBullet, Gazebo de la MP seule, essais sur la MP imprimée en 3D).
@@ -65,6 +69,7 @@ python3 scripts/experiments/exp002_ik_vs_urdf.py      # EXP-002 → results/kine
 python3 scripts/experiments/exp004_closed_loop_tracking.py  # EXP-004 → results/experiments/
 python3 scripts/experiments/exp007_workspace_stroke.py      # EXP-007 → results/kinematics/
 python3 scripts/experiments/exp008_forward_kinematics.py    # EXP-008 → results/kinematics/
+python3 scripts/experiments/exp010_statics_lying.py         # EXP-010 → results/dynamics/
 python3 scripts/run_validation.py                     # tests + toutes les campagnes, bilan
 python3 scripts/run_trajectory.py                     # scénarios en simulation DIRECT, erreurs de suivi
 python3 -m src.gui.dashboard                          # tableau de bord (CustomTkinter)

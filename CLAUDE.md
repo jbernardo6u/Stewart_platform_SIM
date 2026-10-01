@@ -8,6 +8,12 @@ Projet REM : système autonome d'attelage et de désattelage de remorque.
 
 La plateforme Stewart (hexapode 6-6 à vérins linéaires) est l'actionneur principal. Elle assure l'alignement précis entre le véhicule tracteur et la remorque. Ce dépôt contient son **jumeau numérique** : modèles géométrique, cinématique et dynamique, simulation, contrôle et validation contre le réel.
 
+## Périmètre (ADR-0004)
+
+- **Ce dépôt** : la plateforme de Stewart **seule** (modèles, PyBullet, Gazebo de la MP seule, essais sur la MP imprimée en 3D).
+- **Banc d'attelage complet** (Stewart + rail d'approche, caméra, IMU) : dépôt de référence [ABMI-software/Demonstrateur_REM](https://github.com/ABMI-software/Demonstrateur_REM). Les développements du banc et de son jumeau Gazebo s'y font. Ici, `src/rem_bench` et `ros2_ws/src/rem_bench_sim` sont un **prototype** figé, conservé pour la migration, sauf correction.
+- État et suite : `docs/reports/2026-10-01_perimetre_et_suite.md`.
+
 ## Objectifs scientifiques
 
 - caractérisation géométrique
@@ -82,7 +88,7 @@ Diagnostic initial : `docs/reports/2026-09-24_analyse_depot.md` (daté, ne pas l
 - Interfaces : `src/gui/dashboard.py` (vue) + `dashboard_controller.py` (logique testable sans affichage). Les classes `SimpleStewartGUI`, `AdvancedStewartGUI`, `PyBulletStewartGUI` sont dépréciées ; leurs `main()` ouvrent le tableau de bord.
 - Cinématique directe : `src.core.forward_kinematics` (**radians**, SI) ; `pose_from_actuator_positions` donne la pose relative à la position de travail à partir des allongements des vérins (codeurs du banc).
 - **Deux plateformes** : le URDF/PyBullet (r = 20 cm) n'est **pas** le banc réel. Le banc (r = 7,5/4 cm, vérins de 10 cm, ROS 2 Jazzy, dépôt `ABMI-software/Demonstrateur_REM`) a son jumeau dans `src/rem_bench` + `ros2_ws/src/rem_bench_sim` (Gazebo), paramétré par `configurations/bench_rem.yaml`. Ne jamais modifier le code du banc depuis ce dépôt ; le jumeau le remplace à ses interfaces (ADR-0003).
-- Jumeau Gazebo : les attaches du mécanisme sont les vraies (sans l'inversion D1 de l'IK du banc) ; les valeurs marquées HYPOTHÈSE dans `bench_rem.yaml` ne sont pas mesurées.
+- Jumeau Gazebo (prototype) : les attaches du mécanisme sont les vraies (sans l'inversion D1 de l'IK du banc) ; les valeurs marquées HYPOTHÈSE dans `bench_rem.yaml` ne sont pas mesurées, et **la scène (caméra embarquée, marqueur fixe, plateforme debout) contredit le banc d'après photos** (caméra fixe, marqueur sur la plaque, plateforme couchée) : ne pas la présenter comme fidèle.
 - Faisabilité : toute trajectoire nouvelle passe par `src.core.feasibility.check_trajectory` (course des vérins) ; les scénarios de démonstration sont dans `src/core/scenarios.py`.
 
 Ne pas « corriger » ces points au détour d'une autre tâche : ils relèvent des Phases 2 et 4 de la roadmap et nécessitent une validation.

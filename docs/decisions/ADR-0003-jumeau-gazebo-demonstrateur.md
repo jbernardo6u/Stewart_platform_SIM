@@ -3,6 +3,7 @@
 - **Date** : 2026-10-01
 - **Statut** : Proposée (à valider)
 - **Révise** : [ADR-0002](ADR-0002-interface-commune-simulation-banc.md) sur le point « passer à ROS 2, trop tôt »
+- **Portée précisée par** [ADR-0004](ADR-0004-perimetre-des-depots.md) : ce jumeau est un **prototype**, dont la suite (scène corrigée, rail, vérins limités en effort) se développe dans Demonstrateur_REM
 
 ## Contexte
 

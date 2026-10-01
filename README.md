@@ -4,6 +4,10 @@ Jumeau numérique d'une plateforme Stewart (hexapode 6-6 à vérins linéaires),
 
 Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la simulation (PyBullet, et un jumeau Gazebo / ROS 2 Jazzy du démonstrateur réel), le contrôle, la visualisation et la validation simulation/réel.
 
+> **Périmètre** ([ADR-0004](docs/decisions/ADR-0004-perimetre-des-depots.md)) : ce dépôt traite de la **plateforme de Stewart seule** : modèles, simulation PyBullet et bientôt Gazebo, essais sur la plateforme imprimée en 3D. Le **banc d'attelage complet** (Stewart et actionneur d'approche sur rail) est développé dans [ABMI-software/Demonstrateur_REM](https://github.com/ABMI-software/Demonstrateur_REM). Sa mécanique ne tient pas aux essais : il sera reproduit sous Gazebo pour être étudié, puis refait. Le jumeau Gazebo du banc présent ici en est le prototype.
+>
+> **Travail en cours et suite** : [docs/reports/2026-10-01_perimetre_et_suite.md](docs/reports/2026-10-01_perimetre_et_suite.md).
+
 ![Stewart Platform](https://user-images.githubusercontent.com/110429424/236367485-5a0f2e46-17ea-44dc-a7d6-048d4344a79d.gif)
 
 | Document | Rôle |
@@ -23,14 +27,14 @@ Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la 
 
 | Niveau | État |
 |---|---|
-| 1 · Simulation | ✅ PyBullet en boucle fermée **validé : 0,28 mm / 0,044°** (EXP-004) ; ✅ **jumeau Gazebo du démonstrateur** : logiciel ROS 2 du banc exécuté sans modification, caméra embarquée rendue (EXP-009, [guide](docs/guides/GAZEBO_BANC_REM.md)) |
+| 1 · Simulation | ✅ PyBullet en boucle fermée **validé : 0,28 mm / 0,044°** (EXP-004) ; ✅ **jumeau Gazebo du démonstrateur** : logiciel ROS 2 du banc exécuté sans modification, caméra rendue (EXP-009, [guide](docs/guides/GAZEBO_BANC_REM.md)) ; **prototype**, scène à refaire dans Demonstrateur_REM ; ⬜ Gazebo de la plateforme seule |
 | 2 · Géométrie | ✅ Géométrie réelle identifiée dans le URDF (EXP-001) ; repères à formaliser |
 | 3 · Cinématique | 🟡 IK **validée contre le URDF** (EXP-002) ; espace de travail limité par la course (EXP-007) ; **FK, jacobien et singularités** (EXP-008) |
 | 4 · Dynamique | ⬜ À créer |
 | 5 · Contrôle | 🟡 Scénarios à lois horaires d'ordre 5, vérification de la course, tableau de bord de pilotage ; limites vitesse/accélération à faire |
-| 6 · Validation | 🟡 51 tests automatisés (27 unitaires, 24 de validation), CI GitHub ; banc physique disponible, aucune mesure réelle encore |
+| 6 · Validation | 🟡 96 tests automatisés (unitaires et de validation), CI GitHub ; aucune mesure réelle encore (plateforme imprimée en 3D à inventorier, banc complet gelé) |
 
-Prochaine étape : **inventaire du banc** ([PROT-001](docs/protocols/PROT-001-inventaire-banc.md)) et interface commune simulation/banc ([ADR-0002](docs/decisions/ADR-0002-interface-commune-simulation-banc.md)), en parallèle de la cinématique directe (Phase 2). Détail et priorités : [ROADMAP.md](ROADMAP.md#priorités-pour-finaliser-révisées-le-2026-09-30-banc-physique-disponible).
+Prochaines étapes (détail : [rapport du 2026-10-01](docs/reports/2026-10-01_perimetre_et_suite.md), [ROADMAP.md](ROADMAP.md)) : inventaire de la plateforme imprimée en 3D ([PROT-001](docs/protocols/PROT-001-inventaire-banc.md)), Gazebo de la plateforme seule, statique en position couchée (efforts des vérins, verrou de couple), puis migration du prototype de jumeau du banc dans Demonstrateur_REM.
 
 ## Avancement
 
@@ -47,6 +51,9 @@ Prochaine étape : **inventaire du banc** ([PROT-001](docs/protocols/PROT-001-in
 | 2026-09-30 | **Tableau de bord unique** (CustomTkinter, vue 3D intégrée, vérins, précision en direct, scénarios) ; lanceur ramené à 5 modes ; correction des longueurs affichées par les anciennes GUI (unités) ; CI GitHub | [QUICK_START](docs/guides/QUICK_START.md) |
 | 2026-09-30 | **EXP-007** : la course des vérins limite z (−90/+111 mm), roulis, tangage (±26 à 36°) et lacet (±72°), mais pas x/y : la limite latérale viendra des cardans | [EXP-007](docs/experiments/EXP-007-espace-travail-course.md) |
 | 2026-09-30 | Préparation du banc : protocole d'inventaire, interface commune simulation/banc proposée | [PROT-001](docs/protocols/PROT-001-inventaire-banc.md), [ADR-0002](docs/decisions/ADR-0002-interface-commune-simulation-banc.md) |
+| 2026-10-01 | Cinématique directe, jacobien, singularités (Phase 2) | [EXP-008](docs/experiments/EXP-008-cinematique-directe-jacobien.md), PR #3 |
+| 2026-10-01 | Prototype de jumeau Gazebo du banc REM : code ROS 2 du banc exécuté sans modification, défauts D1/D9 chiffrés, D13/D14 découverts | [EXP-009](docs/experiments/EXP-009-jumeau-gazebo-demonstrateur.md), [ADR-0003](docs/decisions/ADR-0003-jumeau-gazebo-demonstrateur.md) |
+| 2026-10-01 | Périmètre des dépôts : la plateforme seule ici, le banc complet dans Demonstrateur_REM | [ADR-0004](docs/decisions/ADR-0004-perimetre-des-depots.md) |
 
 **Limites connues** :
 

@@ -11,6 +11,14 @@
 - **Résultats** : `results/simulation/exp009_manual.csv`, `results/simulation/figures/exp009_camera_home.png`
 - **Code** : `src/rem_bench/`, `ros2_ws/src/rem_bench_sim/` ; tests `tests/unit_tests/test_rem_bench.py` ; guide `docs/guides/GAZEBO_BANC_REM.md`
 
+> **Mise à jour du 2026-10-01 — scène à refaire.** La description du banc d'après photos contredit
+> la scène simulée ici : caméra fixe côté cible et marqueur sur la plaque mobile, plateforme
+> couchée, rail d'approche, couple des vérins insuffisant. Restent valables : l'exécution du code
+> du banc sans modification, la fidélité du rendu ArUco, D1, D9, D13, D14 et la résolution du
+> firmware. L'analyse du mode automatique est à reprendre avec le bon montage. La suite se fait
+> dans Demonstrateur_REM ([ADR-0004](../decisions/ADR-0004-perimetre-des-depots.md),
+> [rapport](../reports/2026-10-01_perimetre_et_suite.md)).
+
 ## Titre
 
 Jumeau Gazebo du démonstrateur : caméra embarquée rendue, Arduino virtuel, et code ROS 2 du banc exécuté sans modification.
@@ -93,7 +101,7 @@ H1, H2 et H3 sont validées. Le jumeau Gazebo exécute le logiciel réel du banc
 ## Travaux restants
 
 - Mesurer sur le banc les hypothèses de bench_rem.yaml : montage de la caméra, position du marqueur à l'alignement, vitesse des vérins, montage de l'IMU (`digital_twin_plan.md` §5, PROT-001). Recherche documentaire du 2026-10-01 : aucune de ces valeurs n'est consignée.
-- **Montage de la caméra** : caméra embarquée sur la plateforme, confirmé le 2026-10-01 (les documents qui décrivent une caméra sur bras articulé concernent un autre montage). Restent à mesurer : la position et l'orientation par rapport au centre de la plateforme. `calib_ext3.npz` (caméra à environ 50 cm de son repère, inclinée d'environ 37°) ne décrit donc pas ce montage, ou alors seulement sa relation au marqueur fixe 24.
+- **Montage de la caméra : contradiction à lever.** Une réponse du 2026-10-01 indiquait une caméra embarquée sur la plateforme ; la description du banc d'après photos, du même jour, indique une caméra **fixe** (bras col de cygne, disque Space Lock côté cible), le marqueur 26 **sur la plaque mobile** et une plateforme **couchée** (normale horizontale, dans l'axe du rail), à environ 20 cm. La scène de cette fiche est donc à refaire (voir ci-dessous).
 - Firmware : `pwm_max` = 230 se trouve dans la zone où le banc signale un retour lent faute de couple (210 à 240). Modéliser l'asymétrie sortie/retour, et proposer au banc de borner le PWM à 200.
 - Rendre la distorsion de la caméra (`calib_int.npz`) et calibrer le bruit caméra et IMU sur des enregistrements du mode Acquisition.
 - Remonter D13 et D14 au dépôt du banc ; tester les corrections de D1, D2, D3 et la loi incrémentale dans le jumeau (critère de convergence en boucle fermée).

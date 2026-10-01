@@ -4,7 +4,7 @@
 |---|---|
 | `urdf/` | `Stewart.urdf` (51 liens, 50 joints), `Link_graph.txt` (graphe des liens), `hello_bullet.py` (test de chargement PyBullet, à lancer depuis ce dossier) |
 | `meshes/` | 51 maillages STL (échelle 0,001 appliquée dans le URDF) |
-| `gazebo/`, `worlds/`, `launch/` | à créer (Phase 4) |
+| `gazebo/`, `worlds/`, `launch/` | vides : le monde Gazebo du démonstrateur est **généré** au lancement depuis `configurations/bench_rem.yaml` (`src/rem_bench/sdf.py`, `ros2_ws/src/rem_bench_sim`, [EXP-009](../docs/experiments/EXP-009-jumeau-gazebo-demonstrateur.md)) |
 
 Le URDF référence les maillages en `../meshes/*.stl`.
 

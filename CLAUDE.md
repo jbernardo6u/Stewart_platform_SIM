@@ -8,6 +8,12 @@ Projet REM : système autonome d'attelage et de désattelage de remorque.
 
 La plateforme Stewart (hexapode 6-6 à vérins linéaires) est l'actionneur principal. Elle assure l'alignement précis entre le véhicule tracteur et la remorque. Ce dépôt contient son **jumeau numérique** : modèles géométrique, cinématique et dynamique, simulation, contrôle et validation contre le réel.
 
+## Périmètre (ADR-0004)
+
+- **Ce dépôt** : la plateforme de Stewart **seule** (modèles, PyBullet, Gazebo de la MP seule, essais sur la MP imprimée en 3D).
+- **Banc d'attelage complet** (Stewart + rail d'approche, caméra, IMU) : dépôt de référence [ABMI-software/Demonstrateur_REM](https://github.com/ABMI-software/Demonstrateur_REM). Les développements du banc et de son jumeau Gazebo s'y font. Ici, `src/rem_bench` et `ros2_ws/src/rem_bench_sim` sont un **prototype** figé, conservé pour la migration, sauf correction.
+- État et suite : `docs/reports/2026-10-01_perimetre_et_suite.md`.
+
 ## Objectifs scientifiques
 
 - caractérisation géométrique
@@ -64,6 +70,8 @@ python3 scripts/run_trajectory.py                     # scénarios en simulation
 python3 -m src.gui.dashboard                          # tableau de bord (CustomTkinter)
 python3 run_simulation.py                             # menu de lancement (5 modes)
 python3 scripts/system_check.py                       # diagnostic de l'environnement
+# Jumeau Gazebo du démonstrateur (Ubuntu 24.04, ROS 2 Jazzy) : docs/guides/GAZEBO_BANC_REM.md
+ros2 launch rem_bench_sim bench_sim.launch.py mode:=manual
 ```
 
 `tests/integration_tests/test_physical_platform.py` pilote le banc réel : ne jamais le lancer sans matériel ni en CI. La CI (`.github/workflows/tests.yml`) ne lance que `unit_tests` et `validation_tests`.
@@ -79,6 +87,8 @@ Diagnostic initial : `docs/reports/2026-09-24_analyse_depot.md` (daté, ne pas l
 - En mode GUI sous WSLg, `p.disconnect()` provoque un segfault (bogue PyBullet/OpenGL, reproduit sans modèle). Le tableau de bord utilise donc DIRECT + rendu hors écran (`PyBulletSimulator(offscreen=True)`, greffon EGL chargé **avant** les modèles) : ne pas le repasser en `p.GUI`.
 - Interfaces : `src/gui/dashboard.py` (vue) + `dashboard_controller.py` (logique testable sans affichage). Les classes `SimpleStewartGUI`, `AdvancedStewartGUI`, `PyBulletStewartGUI` sont dépréciées ; leurs `main()` ouvrent le tableau de bord.
 - Cinématique directe : `src.core.forward_kinematics` (**radians**, SI) ; `pose_from_actuator_positions` donne la pose relative à la position de travail à partir des allongements des vérins (codeurs du banc).
+- **Deux plateformes** : le URDF/PyBullet (r = 20 cm) n'est **pas** le banc réel. Le banc (r = 7,5/4 cm, vérins de 10 cm, ROS 2 Jazzy, dépôt `ABMI-software/Demonstrateur_REM`) a son jumeau dans `src/rem_bench` + `ros2_ws/src/rem_bench_sim` (Gazebo), paramétré par `configurations/bench_rem.yaml`. Ne jamais modifier le code du banc depuis ce dépôt ; le jumeau le remplace à ses interfaces (ADR-0003).
+- Jumeau Gazebo (prototype) : les attaches du mécanisme sont les vraies (sans l'inversion D1 de l'IK du banc) ; les valeurs marquées HYPOTHÈSE dans `bench_rem.yaml` ne sont pas mesurées, et **la scène (caméra embarquée, marqueur fixe, plateforme debout) est fausse** : sur le banc, la caméra est fixe sur le col de cygne (confirmé le 2026-10-01), le marqueur sur la plaque, la plateforme couchée : ne pas la présenter comme fidèle.
 - Faisabilité : toute trajectoire nouvelle passe par `src.core.feasibility.check_trajectory` (course des vérins) ; les scénarios de démonstration sont dans `src/core/scenarios.py`.
 
 Ne pas « corriger » ces points au détour d'une autre tâche : ils relèvent des Phases 2 et 4 de la roadmap et nécessitent une validation.
@@ -91,7 +101,7 @@ Ne pas « corriger » ces points au détour d'une autre tâche : ils relèvent d
 | `models/` | Modèles géométrie, cinématique, dynamique, calibration, identification (CAO, notebooks, futurs modules) |
 | `controllers/` | Contrôle inverse et direct, trajectoires, commande de mouvement, asservissement |
 | `simulation/` | URDF, maillages, Gazebo, mondes, launch |
-| `ros2_ws/` | Espace de travail ROS2 (à créer) |
+| `ros2_ws/` | Espace de travail ROS 2 Jazzy : `rem_bench_sim` (jumeau Gazebo du démonstrateur) |
 | `configurations/` | Fichiers YAML |
 | `datasets/` | Mesures brutes (immutables) |
 | `results/` | Figures, vidéos et sorties générées, par thème |

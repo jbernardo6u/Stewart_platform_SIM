@@ -11,4 +11,4 @@
 | `guides/` | [QUICK_START.md](guides/QUICK_START.md) : prise en main (5 modes, tableau de bord, scénarios) |
 | `assets/` | Icônes et ressources des documents |
 
-Les rapports de `reports/` sont datés et ne sont pas réécrits ; `reports/history/` (dont l'ancien `GUIDE_UTILISATION.md`) décrit l'arborescence d'avant le 2026-09-24. Correspondances : [rapport de restructuration](reports/2026-09-24_restructuration.md).
+Les rapports de `reports/` sont datés et ne sont pas réécrits ; `reports/history/` (dont l'ancien `GUIDE_UTILISATION.md`) décrit l'arborescence d'avant le 2026-09-24. Correspondances : [rapport de restructuration](reports/2026-09-24_restructuration.md). Périmètre des dépôts, état et suite : [rapport du 2026-10-01](reports/2026-10-01_perimetre_et_suite.md).

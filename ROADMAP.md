@@ -3,7 +3,17 @@
 Chaque phase se termine par un **critère de sortie** vérifiable et au moins une fiche d'expérimentation dans `docs/experiments/`.
 Légende : ✅ fait · 🟡 partiel · ⬜ à faire.
 
-## Priorités pour finaliser (révisées le 2026-09-30, banc physique disponible)
+## Périmètre et priorités (révisés le 2026-10-01)
+
+Ce dépôt traite de la **plateforme de Stewart seule** ; le banc d'attelage complet est développé dans [Demonstrateur_REM](https://github.com/ABMI-software/Demonstrateur_REM) ([ADR-0004](docs/decisions/ADR-0004-perimetre-des-depots.md)). Détail : [rapport du 2026-10-01](docs/reports/2026-10-01_perimetre_et_suite.md).
+
+1. ✅ Cinématique complète (FK, jacobien, singularités, EXP-008).
+2. ⬜ **Inventaire de la plateforme imprimée en 3D** (PROT-001) et essais réels si son électronique le permet (ADR-0002 à réviser).
+3. ⬜ **Gazebo de la plateforme seule**, en réutilisant l'approche du prototype EXP-009 (FK, rendu), paramétré par sa géométrie.
+4. ⬜ **Statique en position couchée** (Phase 3, V-4) : efforts `f = J⁻ᵀ·w` sur l'espace de travail, masse et centre de gravité en paramètres. C'est la réponse au verrou de couple du banc.
+5. ⬜ Fusion et migration du prototype de jumeau du banc vers Demonstrateur_REM, où se poursuivent : scène corrigée (caméra fixe, marqueur sur la plaque, plateforme couchée), rail d'approche, vérins limités en effort, corrections D1–D3, D13, D14.
+
+## Priorités pour finaliser (révisées le 2026-09-30, banc physique disponible ; remplacées par la section ci-dessus)
 
 Le banc existe : les phases matérielles (6 et 7) ne sont plus un horizon lointain. Ordre proposé :
 
@@ -18,7 +28,7 @@ Le banc existe : les phases matérielles (6 et 7) ne sont plus un horizon lointa
 5. **Calibration et validation simulation/réel** (Phases 6 et 7), dès que 1 est prêt.
 6. **Scénarios REM complets** (Phase 8) : repère outil, estimation de pose du timon, boucle d'alignement.
 
-Gazebo (Phase 4, EXP-005) n'est utile que si l'intégration ROS2/Gazebo est une exigence : PyBullet est validé à 0,28 mm.
+**Mise à jour du 2026-10-01** : le banc réel est sous **ROS 2 Jazzy** (dépôt `ABMI-software/Demonstrateur_REM`), et ses mouvements sont gelés (la mécanique ne tient pas). Un **jumeau Gazebo du démonstrateur** exécute désormais son logiciel sans modification ([ADR-0003](docs/decisions/ADR-0003-jumeau-gazebo-demonstrateur.md), [EXP-009](docs/experiments/EXP-009-jumeau-gazebo-demonstrateur.md)). Le URDF/PyBullet (20 cm) décrit une autre plateforme que le banc (7,5 cm).
 
 ## Phase 0 : Assainissement du dépôt 🟡
 
@@ -71,7 +81,10 @@ Gazebo (Phase 4, EXP-005) n'est utile que si l'intégration ROS2/Gazebo est une 
 - ✅ **Blocage cinématique levé** : butée basse des vérins à la pose neutre (d'où une hauteur de travail de 0,09 m) et limites [0 ; 2π] parasites. Suivi PyBullet de **0,28 mm / 0,044°** (critère < 0,5 mm / 0,1° atteint)
 - ✅ `PyBulletSimulator` (GUI PyBullet) délègue à `StewartPlatform` : mêmes corrections, suivi < 0,5 mm / 0,1° vérifié par `tests/validation_tests/test_pybullet_simulator.py`
 - ✅ `scripts/create_video.py` porté : GIF d'un scénario par rendu hors écran (`output/videos/`) ; `examples/basic_control.py` réécrit
-- Conversion URDF→SDF (corriger les limites [0 ; 2π] dans le modèle), monde Gazebo, fermeture de boucle sous Gazebo
+- ✅ **Jumeau Gazebo du démonstrateur** (`src/rem_bench`, `ros2_ws/src/rem_bench_sim`) : Arduino virtuel (protocole et firmware), caméra rendue aux intrinsèques du banc (montée à tort sur la plateforme dans le prototype), IMU simulée ; `aruco_node`, `imu_node`, `fusion_node`, `manual_stewart_node`, `stewart_node` inchangés. ArUco à 0,7 % en profondeur, 0,06 mm latéral ([EXP-009](docs/experiments/EXP-009-jumeau-gazebo-demonstrateur.md))
+- ⬜ Jumeau du banc (**suite dans Demonstrateur_REM**, ADR-0004) : scène d'après photos (caméra fixe sur col de cygne **confirmée**, marqueur sur la plaque, plateforme couchée, environ 20 cm), rail, vérins limités en effort, cadence de 8–10 Hz et latence de 200 ms, distorsion et bruit calibrés, `launch_testing` et CI Jazzy
+- ⬜ **Gazebo de la plateforme seule** (ce dépôt)
+- ⬜ Mécanisme dynamique fermé sous Gazebo (si les efforts sont nécessaires) ; conversion du URDF 20 cm
 - 🟡 Scénarios REM : approche d'attelage illustrative (`scenarios.hitch_approach`) ; désalignements réels et charge verticale à spécifier
 - Enregistrement systématique dans `results/`
 

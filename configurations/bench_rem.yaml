@@ -1,0 +1,98 @@
+# Jumeau du démonstrateur REM (banc ROS 2 Jazzy)
+# ================================================
+#
+# Le banc réel est piloté par le dépôt ABMI-software/Demonstrateur_REM (paquet
+# `stewart_control`). Ce fichier décrit le **mécanisme physique** simulé sous Gazebo
+# (src/rem_bench, ros2_ws/src/rem_bench_sim) ; les nœuds du banc gardent leur propre
+# configuration (stewart_params.yaml), dérivée pour la simulation par
+# scripts/generate_bench_sim.py.
+#
+# Deux catégories de valeurs :
+#   - « banc » : relevées dans Demonstrateur_REM@36fd541 (stewart_params.yaml,
+#     calib_int.npz, pilotage_feedback_mp.ino, schéma stewart_hexapod_motor_layout.png) ;
+#   - « HYPOTHÈSE » : inconnues à ce jour, à mesurer sur le banc (PROT-001, et
+#     docs/design/digital_twin_plan.md §5 du dépôt du banc). Ne pas les présenter
+#     comme des mesures.
+
+source:
+  repository: "https://github.com/ABMI-software/Demonstrateur_REM"
+  commit: "36fd541"
+
+# --- Géométrie (banc) ---
+# Mêmes formules d'angles que InverseKinematics (base : 7π/6 ± γ_B, π/2 ± γ_B, 11π/6 ± γ_B ;
+# plateforme : 3π/2 ∓ γ_P, 5π/6 ± γ_P, π/6 ± γ_P), cohérentes avec le schéma du banc
+# (M1 à 221,3°, P1 à 252,7°). Base = grand cercle, plateforme = petit cercle.
+geometry:
+  radius_base: 0.075            # m
+  radius_platform: 0.04         # m
+  gamma_base: 11.3              # deg
+  gamma_platform: 17.3          # deg
+  home_position: [0.0, 0.0, 0.185]   # m, centre plateforme / centre base, pose « home » de l'IK du banc
+
+# --- Vérins (banc) ---
+actuators:
+  # Longueur d'une jambe quand son codeur vaut 0 (position home à la mise sous tension).
+  # Valeur L0 du banc. L'IK du banc donne 19,06 cm à home (défaut D9 : à mesurer).
+  length_at_zero_cm: 18.86
+  stroke_cm: [0.0, 10.0]        # course logique et limites motor_min/max_cm du banc
+  # Firmware pilotage_feedback_mp.ino
+  stop_tolerance_cm: 0.10
+  restart_tolerance_cm: 0.25
+  pwm_min: 115
+  pwm_max: 230
+  pwm_ramp_step: 12
+  pwm_per_cm: 35.0              # pwmCible = pwm_min + 35·|erreur(cm)|
+  loop_period_s: 0.02           # delay(20) + envoi du retour à chaque boucle
+  ready_message: "Arduino connecte via USB - Pret"
+  # ESTIMATION (non mesurée) : vitesse d'un vérin à PWM 255, en la supposant proportionnelle au PWM.
+  # Essai d'endurance à PWM 150, à vide : 382 allers-retours en 30 min. Sur toute la course
+  # (2 × 10 cm), cela fait ≈ 4,2 cm/s en moyenne, soit 4,2 × 255/150 ≈ 7,1 cm/s à PWM 255.
+  # C'est une borne basse : la moyenne inclut les arrêts et les inversions, et la course
+  # réellement parcourue n'est pas consignée. Le banc signale aussi une plage utile de PWM
+  # de 100 à 200 (retour lent de 210 à 240, blocage au retour à 255), non modélisée ici.
+  speed_cm_s_at_full_pwm: 7.1
+
+# --- Caméra (banc : capteur et intrinsèques ; HYPOTHÈSE : montage) ---
+camera:
+  width: 640
+  height: 480
+  fps: 30
+  # calib_int.npz du banc (ChArUco 6x9, RMS 1,70 px). La caméra simulée est un sténopé idéal
+  # aux mêmes intrinsèques ; la distorsion n'est pas encore rendue (nœud ArUco simulé : dist = 0).
+  fx: 522.9546
+  fy: 522.9436
+  cx: 327.9705
+  cy: 262.8604
+  near_clip: 0.01
+  far_clip: 5.0
+  # HYPOTHÈSE DU PROTOTYPE, FAUSSE : ici, caméra embarquée sur la plateforme, au bord +x, axe
+  # optique horizontal. Sur le banc (confirmé le 2026-10-01), la caméra est FIXE sur le bras col
+  # de cygne, côté cible, et le marqueur 26 est sur la plaque mobile ; plateforme couchée. Scène à refaire dans Demonstrateur_REM (ADR-0004,
+  # docs/reports/2026-10-01_perimetre_et_suite.md).
+  # Repère du corps caméra Gazebo : x = axe optique, y à gauche, z en haut.
+  mount_position_in_platform: [0.05, 0.0, 0.02]   # m, dans le repère plateforme {P}
+  mount_rpy_in_platform_deg: [0.0, 0.0, 0.0]
+
+# --- Marqueurs ArUco (banc : dictionnaire, id, taille ; HYPOTHÈSE : position) ---
+markers:
+  dictionary: "DICT_4X4_1000"
+  target:                       # marqueur côté remorque, fixe dans le monde
+    id: 26
+    size_m: 0.022               # côté du carré noir
+    # HYPOTHÈSE : face à la caméra, à 30 cm devant elle quand la plateforme est à home.
+    # Position du centre et orientation de la normale (vers la caméra) dans le monde.
+    position: [0.35, 0.0, 0.205]
+    rpy_deg: [0.0, 0.0, 0.0]    # normale vers -x monde (voir src/rem_bench/scene.py)
+
+# --- IMU (HYPOTHÈSE : montage aligné sur la plateforme) ---
+imu:
+  mount_rpy_in_platform_deg: [0.0, 0.0, 0.0]
+  gravity_m_s2: 9.81
+  magnetic_field_world: [0.22, 0.0, -0.42]   # gauss, nord magnétique selon +x monde (inclinaison ≈ 62°)
+  noise_orientation_deg: 0.0    # bruits à calibrer sur les enregistrements du mode Acquisition
+  noise_gyro_deg_s: 0.0
+
+# --- Gazebo ---
+gazebo:
+  world_name: "rem_bench"
+  pose_update_period_s: 0.02    # mise à jour cinématique des poses (plateforme, jambes)

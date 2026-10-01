@@ -76,7 +76,8 @@ flowchart TB
 | Adaptateur PyBullet | `src/core/platform.py::StewartPlatform` | ✅ Boucle fermée validée : **0,28 mm / 0,044°** avec gravité, 8 µm sans ([EXP-004](docs/experiments/EXP-004-simulation-boucle-fermee.md)) |
 | Interface GUI du simulateur | `src/simulation/pybullet_sim.py::PyBulletSimulator` | ✅ Délègue à `StewartPlatform.from_urdf` (caméra, enregistrement, forces, état) |
 | Identification géométrique | `src/simulation/urdf_geometry.py` | ✅ Centres des cardans extraits du URDF (EXP-001) |
-| Gazebo, mondes, launch | `simulation/gazebo/`, `simulation/worlds/`, `simulation/launch/` | ⬜ À créer (Phase 4) |
+| Jumeau Gazebo du **démonstrateur** (autre plateforme : r = 7,5/4 cm) | `src/rem_bench/` (mécanisme, firmware, capteurs, SDF), `ros2_ws/src/rem_bench_sim/` (nœuds, launch), `configurations/bench_rem.yaml` | ✅ Logiciel ROS 2 du banc exécuté sans modification, caméra embarquée rendue ([EXP-009](docs/experiments/EXP-009-jumeau-gazebo-demonstrateur.md), [ADR-0003](docs/decisions/ADR-0003-jumeau-gazebo-demonstrateur.md)) |
+| Gazebo de la plateforme URDF (20 cm) | `simulation/gazebo/` | ⬜ Non prévu tant qu'il n'est pas requis |
 | Visualisation | `src/gui/dashboard.py` (CustomTkinter, vue 3D rendue hors écran), `src/simulation/matplotlib_viz.py`, `scripts/create_web_viz.py` | ✅ Tableau de bord unique ; logique séparée dans `dashboard_controller.py` |
 
 **Fermeture de boucle** : l'URDF est un arbre et chaque jambe une chaîne U-P-R-U à 6 degrés de liberté (cardans idéaux, EXP-001). Cinq jambes sont fermées à l'exécution par des contraintes `JOINT_FIXED` **ancrées sur la pose relative des liens en configuration zéro** (les repères de contrainte PyBullet sont relatifs au centre de masse), entre les paires `joint_indices = [(6,16), (35,17), (49,18), (42,19), (28,20)]`, et la 6e est fermée par l'arbre lui-même. Les vérins sont les joints prismatiques `Slider_13` à `Slider_18` = jambes 1 à 6, soit `DEFAULT_ACTUATOR_INDICES = [2, 31, 45, 38, 24, 9]` (`src/core/platform.py`), dans l'ordre des sorties de l'IK. Cette correspondance est validée à 0,4° près par [EXP-002](docs/experiments/EXP-002-validation-ik-urdf.md). L'ancien ordre `[9, 2, 31, 45, 38, 24]` n'était valable qu'avec l'IK historique. Sous Gazebo, cette fermeture devra passer par SDF (`<joint>` en boucle) ou par un plugin.
@@ -229,6 +230,33 @@ flowchart LR
 ```
 
 Règle : **les flèches ne remontent jamais**. `models` n'importe ni `controllers`, ni `simulation`, ni `ros2_ws`, ni la GUI.
+
+## Jumeau ROS 2 du démonstrateur (en place, EXP-009)
+
+```mermaid
+flowchart LR
+    subgraph Banc["Nœuds du banc (stewart_control), inchangés"]
+        MAN[manual_stewart_node / stewart_node]
+        AR[aruco_node]
+        IMU[imu_node]
+        FUS[fusion_node]
+    end
+    subgraph Jumeau["rem_bench_sim"]
+        VH[virtual_hardware<br/>Arduino virtuel + FK]
+        SA[sim_aruco<br/>_open_camera → topic]
+        SI[sim_imu<br/>doublure MPU-9250]
+    end
+    GZ[Gazebo Harmonic<br/>caméra embarquée]
+    MAN <-->|série : pseudo-terminal| VH
+    VH -->|set_pose_vector| GZ
+    GZ -->|/rem_bench/camera/image| SA
+    SA -.exécute.-> AR
+    VH -->|/sim/platform_pose| SI
+    SI -.exécute.-> IMU
+    AR --> FUS
+    IMU --> FUS
+    FUS -->|/F_pose| MAN
+```
 
 ## Architecture ROS2 envisagée (Phase 5)
 

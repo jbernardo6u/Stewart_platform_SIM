@@ -4,6 +4,12 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié]
 
+### Ajouté : cinématique directe (Phase 2, 2026-10-01)
+- `src/core/forward_kinematics.py` (NumPy pur, radians) : `forward_kinematics` (Newton-Raphson, mise à jour de l'orientation sur SO(3)), `pose_from_actuator_positions` (allongements des vérins → pose relative à la position de travail, pour le banc), `jacobian` (`dℓ/dt = J·[v ; ω]`), `singularity_measures` (conditionnement adimensionné, déterminant), `leg_lengths`, `rotation_matrix`, `rotation_to_rpy`. API existante inchangée.
+- Configuration : section `kinematics.forward` (tolérance, nombre d'itérations).
+- [EXP-008](docs/experiments/EXP-008-cinematique-directe-jacobien.md) : aller-retour IK→FK à 10⁻¹² m (critère de sortie de la Phase 2), 0,8 ms par appel ; FK sur les joints PyBullet à 5 µm sans gravité, 0,15 à 0,5 mm avec gravité (souplesse des liaisons) ; singularité de Fichter à lacet ±90°. Script `scripts/experiments/exp008_forward_kinematics.py`, ajouté à `run_validation.py`.
+- Tests : `tests/unit_tests/test_forward_kinematics.py` (20), `tests/validation_tests/test_forward_kinematics_simulation.py` (2).
+
 ### Modifié : lisibilité et préparation du banc (2026-09-30, suite)
 - Tableau de bord : le graphe « écart consigne/mesure » (deux courbes sur deux axes superposés, difficile à lire) devient deux graphes empilés, **écart de position (mm)** et **écart d'orientation (°)**, chacun avec sa valeur courante, une légende explicative et une ligne pointillée à la précision validée (`gui.dashboard.tracking_criteria`, EXP-004).
 - `scripts/create_video.py` porté : GIF d'un scénario par rendu hors écran (l'ancienne version appelait `start_simmulation`, inexistante) ; ancienne version dans `legacy/scripts/`.

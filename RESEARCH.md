@@ -11,8 +11,8 @@ L'attelage automatique d'une remorque demande d'aligner l'interface d'attelage d
 | Id | Verrou | Question | Phase | État (2026-09-30) |
 |---|---|---|---|---|
 | V-1 | Précision géométrique | Quel écart entre le modèle paramétrique (`r`, `γ`) et la géométrie réelle (CAO, fabrication), et quel impact sur la précision de pose ? | 1, 6 | 🟡 Écart modèle paramétrique/URDF : 0,8 à 1,6 mm (EXP-001) ; géométrie réelle du banc à mesurer (PROT-001) |
-| V-2 | Cinématique directe temps réel | Quelle méthode de FK converge de façon fiable, dans le budget temps réel, sur tout l'espace de travail utile à l'attelage ? | 2 | ⬜ |
-| V-3 | Singularités et espace de travail | L'espace de travail nécessaire à l'alignement REM (±x, ±y, ±z, ±lacet) est-il libre de singularités, avec une marge de conditionnement suffisante ? | 2 | 🟡 Course : non limitante en x/y, lacet ±72° (EXP-007) ; cardans et singularités à étudier |
+| V-2 | Cinématique directe temps réel | Quelle méthode de FK converge de façon fiable, dans le budget temps réel, sur tout l'espace de travail utile à l'attelage ? | 2 | ✅ Newton-Raphson sur SO(3) : 7 itérations au plus, 0,8 ms en Python, sur tout l'espace du tableau de bord (EXP-008) ; précision réelle limitée par la souplesse du mécanisme (0,15 à 0,5 mm sous gravité en simulation) |
+| V-3 | Singularités et espace de travail | L'espace de travail nécessaire à l'alignement REM (±x, ±y, ±z, ±lacet) est-il libre de singularités, avec une marge de conditionnement suffisante ? | 2 | 🟡 Course : non limitante en x/y, lacet ±72° (EXP-007) ; singularité de Fichter à lacet ±90°, conditionnement ≤ 7 sur ±60° (EXP-008) ; cardans et recherche 6D à faire |
 | V-4 | Capacité en effort | Les vérins supportent-ils la charge du timon sur tout l'espace de travail, y compris en dynamique ? | 3 | ⬜ Charge du timon à spécifier (PROT-001) |
 | V-5 | Stabilité | Quelle stabilité en boucle fermée sous charge variable et chocs d'accostage ? | 3, 5 | ⬜ |
 | V-6 | Énergie | Quelle consommation par cycle d'attelage, et quelles trajectoires la minimisent ? | 3, 5 | ⬜ |

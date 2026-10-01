@@ -18,7 +18,7 @@ Le banc existe : les phases matérielles (6 et 7) ne sont plus un horizon lointa
 5. **Calibration et validation simulation/réel** (Phases 6 et 7), dès que 1 est prêt.
 6. **Scénarios REM complets** (Phase 8) : repère outil, estimation de pose du timon, boucle d'alignement.
 
-Gazebo (Phase 4, EXP-005) n'est utile que si l'intégration ROS2/Gazebo est une exigence : PyBullet est validé à 0,28 mm.
+**Mise à jour du 2026-10-01** : le banc réel est sous **ROS 2 Jazzy** (dépôt `ABMI-software/Demonstrateur_REM`), caméra embarquée, et ses mouvements sont gelés. Un **jumeau Gazebo du démonstrateur** exécute désormais son logiciel sans modification ([ADR-0003](docs/decisions/ADR-0003-jumeau-gazebo-demonstrateur.md), [EXP-009](docs/experiments/EXP-009-jumeau-gazebo-demonstrateur.md)). Le URDF/PyBullet (20 cm) décrit une autre plateforme que le banc (7,5 cm).
 
 ## Phase 0 : Assainissement du dépôt 🟡
 
@@ -71,7 +71,9 @@ Gazebo (Phase 4, EXP-005) n'est utile que si l'intégration ROS2/Gazebo est une 
 - ✅ **Blocage cinématique levé** : butée basse des vérins à la pose neutre (d'où une hauteur de travail de 0,09 m) et limites [0 ; 2π] parasites. Suivi PyBullet de **0,28 mm / 0,044°** (critère < 0,5 mm / 0,1° atteint)
 - ✅ `PyBulletSimulator` (GUI PyBullet) délègue à `StewartPlatform` : mêmes corrections, suivi < 0,5 mm / 0,1° vérifié par `tests/validation_tests/test_pybullet_simulator.py`
 - ✅ `scripts/create_video.py` porté : GIF d'un scénario par rendu hors écran (`output/videos/`) ; `examples/basic_control.py` réécrit
-- Conversion URDF→SDF (corriger les limites [0 ; 2π] dans le modèle), monde Gazebo, fermeture de boucle sous Gazebo
+- ✅ **Jumeau Gazebo du démonstrateur** (`src/rem_bench`, `ros2_ws/src/rem_bench_sim`) : Arduino virtuel (protocole et firmware), caméra embarquée rendue aux intrinsèques du banc, IMU simulée ; `aruco_node`, `imu_node`, `fusion_node`, `manual_stewart_node`, `stewart_node` inchangés. ArUco à 0,7 % en profondeur, 0,06 mm latéral ([EXP-009](docs/experiments/EXP-009-jumeau-gazebo-demonstrateur.md))
+- ⬜ Jumeau : distorsion et bruit caméra/IMU calibrés sur le banc ; montage caméra/marqueur mesuré ; tests `launch_testing` et CI Jazzy
+- ⬜ Mécanisme dynamique fermé sous Gazebo (si les efforts sont nécessaires) ; conversion du URDF 20 cm
 - 🟡 Scénarios REM : approche d'attelage illustrative (`scenarios.hitch_approach`) ; désalignements réels et charge verticale à spécifier
 - Enregistrement systématique dans `results/`
 

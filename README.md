@@ -2,7 +2,7 @@
 
 Jumeau numérique d'une plateforme Stewart (hexapode 6-6 à vérins linéaires), actionneur principal du **projet REM** : système autonome d'attelage et de désattelage de remorque. La plateforme aligne précisément le véhicule tracteur sur la remorque.
 
-Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la simulation (PyBullet aujourd'hui, Gazebo/ROS2 prévus), le contrôle, la visualisation et la validation simulation/réel.
+Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la simulation (PyBullet, et un jumeau Gazebo / ROS 2 Jazzy du démonstrateur réel), le contrôle, la visualisation et la validation simulation/réel.
 
 ![Stewart Platform](https://user-images.githubusercontent.com/110429424/236367485-5a0f2e46-17ea-44dc-a7d6-048d4344a79d.gif)
 
@@ -23,7 +23,7 @@ Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la 
 
 | Niveau | État |
 |---|---|
-| 1 · Simulation | ✅ PyBullet en boucle fermée **validé : 0,28 mm / 0,044°** (EXP-004) ; Gazebo/ROS2 à créer |
+| 1 · Simulation | ✅ PyBullet en boucle fermée **validé : 0,28 mm / 0,044°** (EXP-004) ; ✅ **jumeau Gazebo du démonstrateur** : logiciel ROS 2 du banc exécuté sans modification, caméra embarquée rendue (EXP-009, [guide](docs/guides/GAZEBO_BANC_REM.md)) |
 | 2 · Géométrie | ✅ Géométrie réelle identifiée dans le URDF (EXP-001) ; repères à formaliser |
 | 3 · Cinématique | 🟡 IK **validée contre le URDF** (EXP-002) ; espace de travail limité par la course (EXP-007) ; **FK, jacobien et singularités** (EXP-008) |
 | 4 · Dynamique | ⬜ À créer |

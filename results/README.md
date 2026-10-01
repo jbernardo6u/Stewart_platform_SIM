@@ -12,5 +12,6 @@ Chaque résultat se rattache à une fiche `docs/experiments/EXP-XXX` et se rég�
 | | `videos/` : vidéos PyBullet historiques | historique |
 | | `web/` : visualisation HTML de `scripts/create_web_viz.py` (ignorée par git) | — |
 | `dynamics/` | vide | Phase 3 |
+| `simulation/` | `exp009_manual.csv`, `figures/exp009_camera_home.png` : jumeau Gazebo du démonstrateur (consignes manuelles, ArUco/vérité, image de la caméra embarquée) | EXP-009 |
 
 Sorties de démonstration non versionnées : `output/trajectories/` (`scripts/run_trajectory.py --save`), `output/videos/` (`scripts/create_video.py`).

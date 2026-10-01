@@ -16,8 +16,8 @@ L'attelage automatique d'une remorque demande d'aligner l'interface d'attelage d
 | V-4 | Capacité en effort | Les vérins supportent-ils la charge du timon sur tout l'espace de travail, y compris en dynamique ? | 3 | ⬜ Charge du timon à spécifier (PROT-001) |
 | V-5 | Stabilité | Quelle stabilité en boucle fermée sous charge variable et chocs d'accostage ? | 3, 5 | ⬜ |
 | V-6 | Énergie | Quelle consommation par cycle d'attelage, et quelles trajectoires la minimisent ? | 3, 5 | ⬜ |
-| V-7 | Fidélité du jumeau | Quel écart simulation/réel (pose, efforts, temps) est atteignable, et quels paramètres dominent cet écart ? | 4, 7 | 🟡 Simulation ↔ modèle : 0,28 mm / 0,044° (EXP-004) ; simulation ↔ réel à faire (banc disponible, ADR-0002) |
-| V-8 | Fermeture de boucle en simulation | Comment représenter fidèlement un mécanisme parallèle (boucles fermées) dans des moteurs pensés pour les chaînes arborescentes (PyBullet, Gazebo) ? | 4 | ✅ PyBullet : contraintes fixes ancrées, limites recentrées (EXP-004) ; Gazebo à faire si requis |
+| V-7 | Fidélité du jumeau | Quel écart simulation/réel (pose, efforts, temps) est atteignable, et quels paramètres dominent cet écart ? | 4, 7 | 🟡 Simulation ↔ modèle : 0,28 mm / 0,044° (EXP-004) ; jumeau Gazebo exécutant le logiciel du banc (EXP-009) ; simulation ↔ réel à faire (banc gelé) |
+| V-8 | Fermeture de boucle en simulation | Comment représenter fidèlement un mécanisme parallèle (boucles fermées) dans des moteurs pensés pour les chaînes arborescentes (PyBullet, Gazebo) ? | 4 | ✅ PyBullet : contraintes fixes ancrées, limites recentrées (EXP-004) ; Gazebo : jumeau cinématique du démonstrateur, rendu caméra validé à 0,7 % (EXP-009) ; fermeture dynamique non faite |
 | V-9 | Alignement autonome | Quelle stratégie de commande (asservissement visuel, estimation de pose) permet l'alignement sans intervention humaine ? | 8 | ⬜ |
 
 ## État de l'art à documenter

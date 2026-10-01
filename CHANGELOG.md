@@ -4,6 +4,17 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié]
 
+### Ajouté : jumeau Gazebo du démonstrateur REM (2026-10-01)
+- Le banc réel (dépôt `ABMI-software/Demonstrateur_REM`, ROS 2 Jazzy) tourne **sans modification** sur une simulation Gazebo Harmonic ([ADR-0003](docs/decisions/ADR-0003-jumeau-gazebo-demonstrateur.md), proposée).
+- `src/rem_bench/` (Python pur) : géométrie physique du banc et FK des codeurs, émulation du firmware `pilotage_feedback_mp.ino` et port série virtuel (pseudo-terminal), caméra embarquée, marqueur et IMU, génération du monde SDF (marqueur ArUco en géométrie, intrinsèques du banc), configuration des nœuds du banc pour la simulation.
+- `ros2_ws/src/rem_bench_sim` : nœuds `virtual_hardware`, `sim_aruco` (`aruco_node` du banc sur l'image Gazebo), `sim_imu` (`imu_node` du banc sur un MPU-9250 simulé), `exp009_campaign` ; `bench_sim.launch.py` (modes acquisition, manuel, automatique).
+- `configurations/bench_rem.yaml` : mécanisme et capteurs du banc, hypothèses de montage signalées.
+- [EXP-009](docs/experiments/EXP-009-jumeau-gazebo-demonstrateur.md) : D1 (IK du banc : x, y et lacet inversés) et D9 reproduits et chiffrés ; nouveaux défauts du banc D13 (lissage puis zone morte dans `aruco_node` : jusqu'à 6,8 mm d'erreur statique) et D14 (OpenCV 4.6 : `DetectorParameters()` provoque une erreur de segmentation) ; mode automatique inopérant avec `reference_position_m: [0, 0, 0]`.
+- Guide [docs/guides/GAZEBO_BANC_REM.md](docs/guides/GAZEBO_BANC_REM.md) ; 23 tests unitaires (`tests/unit_tests/test_rem_bench.py`).
+
+### Modifié (2026-10-01)
+- `src/__init__.py` : `InverseKinematics`, `StewartPlatform` et `PhysicalStewartPlatform` sont chargés à la demande (PEP 562). L'API est inchangée, mais importer un module NumPy pur n'exige plus PyBullet (côté ROS 2).
+
 ### Ajouté : cinématique directe (Phase 2, 2026-10-01)
 - `src/core/forward_kinematics.py` (NumPy pur, radians) : `forward_kinematics` (Newton-Raphson, mise à jour de l'orientation sur SO(3)), `pose_from_actuator_positions` (allongements des vérins → pose relative à la position de travail, pour le banc), `jacobian` (`dℓ/dt = J·[v ; ω]`), `singularity_measures` (conditionnement adimensionné, déterminant), `leg_lengths`, `rotation_matrix`, `rotation_to_rpy`. API existante inchangée.
 - Configuration : section `kinematics.forward` (tolérance, nombre d'itérations).

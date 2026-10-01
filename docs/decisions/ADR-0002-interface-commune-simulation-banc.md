@@ -1,7 +1,7 @@
 # ADR-0002 : Une interface commune pour la simulation et le banc
 
 - **Date** : 2026-09-30
-- **Statut** : Proposée (à valider avant la première connexion au banc)
+- **Statut** : Proposée (à valider avant la première connexion au banc) ; **à réviser** : le banc est sous ROS 2 Jazzy, voir [ADR-0003](ADR-0003-jumeau-gazebo-demonstrateur.md)
 
 ## Contexte
 

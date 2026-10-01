@@ -22,3 +22,4 @@ Règles :
 | EXP-005 | Même trajectoire sous PyBullet et Gazebo | 4 | V-7, V-8 | Planifiée |
 | [EXP-007](EXP-007-espace-travail-course.md) | Espace de travail limité par la course des vérins | 2 | V-3 | ✅ Terminée : course non limitante en x/y, lacet ±72° |
 | [EXP-008](EXP-008-cinematique-directe-jacobien.md) | Cinématique directe, jacobien et singularités | 2 | V-2, V-3, V-7 | ✅ Terminée : aller-retour 10⁻¹² m, 0,8 ms ; singularité à lacet ±90° |
+| [EXP-009](EXP-009-jumeau-gazebo-demonstrateur.md) | Jumeau Gazebo du démonstrateur, nœuds du banc inchangés | 4 | V-7, V-8 | ✅ Terminée (simulation seule) : ArUco à 0,7 % ; D1/D9 reproduits, D13/D14 découverts |

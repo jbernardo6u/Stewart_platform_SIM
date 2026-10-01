@@ -8,6 +8,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - [ADR-0004](docs/decisions/ADR-0004-perimetre-des-depots.md) (acceptée) : ce dépôt traite de la plateforme de Stewart seule ; le banc d'attelage complet et son jumeau Gazebo se développent dans Demonstrateur_REM ; le jumeau du banc présent ici est un prototype à migrer.
 - [Rapport du 2026-10-01](docs/reports/2026-10-01_perimetre_et_suite.md) : rôles des dépôts, état, contradiction caméra fixe/embarquée, repères proposés pour la plateforme couchée, informations à mesurer, suite pour chaque dépôt.
 - EXP-009, ADR-0003, `bench_rem.yaml`, README, ROADMAP, CLAUDE.md : la scène du prototype (caméra embarquée, marqueur fixe, plateforme debout) est signalée comme contredite par la description du banc d'après photos ; l'indication « caméra embarquée confirmée » est retirée.
+- Montage confirmé par le responsable du projet : **caméra fixe sur le col de cygne**, marqueur 26 sur la plaque mobile. L'hypothèse *eye-in-hand* est écartée.
 
 ### Ajouté : jumeau Gazebo du démonstrateur REM (2026-10-01)
 - Le banc réel (dépôt `ABMI-software/Demonstrateur_REM`, ROS 2 Jazzy) tourne **sans modification** sur une simulation Gazebo Harmonic ([ADR-0003](docs/decisions/ADR-0003-jumeau-gazebo-demonstrateur.md), proposée).

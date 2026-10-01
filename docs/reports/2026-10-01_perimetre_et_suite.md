@@ -55,9 +55,9 @@ Le code ROS 2 du banc (`aruco_node`, `imu_node`, `fusion_node`, `manual_stewart_
 | Actionneur d'approche | absent | rail linéaire à moteur pas à pas, contrôleur séparé, course de 800 mm à confirmer |
 | Vérins | toujours à la consigne (cinématique) | **couple insuffisant** : le jumeau ne doit pas masquer ce verrou |
 
-Une réponse antérieure (« caméra embarquée sur la plateforme ») contredit les photos : **à confirmer**. « Embarquée » désignait peut-être le disque Space Lock.
+**Montage confirmé le 2026-10-01 : caméra fixe sur le col de cygne**, marqueur 26 sur la plaque mobile. L'indication antérieure « caméra embarquée sur la plateforme » est caduque, de même que l'hypothèse *eye-in-hand* du `digital_twin_plan.md` du banc.
 
-## 4. Repères proposés pour le banc complet (à valider)
+## 4. Repères proposés pour le banc complet (caméra fixe confirmée ; reste à valider)
 
 - `{W}` monde : Z vers le haut, gravité −Z (REP-103), X le long du rail, vers la cible.
 - `{R}` chariot du rail : translation `s(t)` selon X.

@@ -65,10 +65,9 @@ camera:
   cy: 262.8604
   near_clip: 0.01
   far_clip: 5.0
-  # HYPOTHÈSE DU PROTOTYPE, CONTREDITE par la description du banc d'après photos (2026-10-01) :
-  # ici, caméra embarquée sur la plateforme, au bord +x, axe optique horizontal. Sur le banc,
-  # la caméra serait fixe (bras col de cygne, côté cible) et le marqueur 26 sur la plaque
-  # mobile, plateforme couchée. Scène à refaire dans Demonstrateur_REM (ADR-0004,
+  # HYPOTHÈSE DU PROTOTYPE, FAUSSE : ici, caméra embarquée sur la plateforme, au bord +x, axe
+  # optique horizontal. Sur le banc (confirmé le 2026-10-01), la caméra est FIXE sur le bras col
+  # de cygne, côté cible, et le marqueur 26 est sur la plaque mobile ; plateforme couchée. Scène à refaire dans Demonstrateur_REM (ADR-0004,
   # docs/reports/2026-10-01_perimetre_et_suite.md).
   # Repère du corps caméra Gazebo : x = axe optique, y à gauche, z en haut.
   mount_position_in_platform: [0.05, 0.0, 0.02]   # m, dans le repère plateforme {P}

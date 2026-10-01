@@ -7,7 +7,7 @@
 
 ## Contexte
 
-- Le banc réel est développé sous **ROS 2 Jazzy** (dépôt `ABMI-software/Demonstrateur_REM`, paquet `stewart_control`) : caméra USB embarquée sur la plateforme, marqueur ArUco, IMU MPU-9250, Arduino Mega en liaison série. Sa géométrie (base de 7,5 cm, plateforme de 4 cm, vérins de 10 cm) n'est **pas** celle du URDF de ce dépôt (20 cm, 19 cm).
+- Le banc réel est développé sous **ROS 2 Jazzy** (dépôt `ABMI-software/Demonstrateur_REM`, paquet `stewart_control`) : caméra USB fixe sur un bras col de cygne, face au marqueur porté par la plateforme (confirmé le 2026-10-01 ; le prototype la place à tort sur la plateforme), marqueur ArUco, IMU MPU-9250, Arduino Mega en liaison série. Sa géométrie (base de 7,5 cm, plateforme de 4 cm, vérins de 10 cm) n'est **pas** celle du URDF de ce dépôt (20 cm, 19 cm).
 - Les mouvements du banc sont gelés (support de caméra fragile) : il faut valider le logiciel du banc en simulation, caméra comprise.
 - ADR-0002 prévoyait une interface Python commune (`PlatformBackend`) et jugeait ROS 2 prématuré. L'existence d'un logiciel ROS 2 complet sur le banc inverse ce jugement.
 

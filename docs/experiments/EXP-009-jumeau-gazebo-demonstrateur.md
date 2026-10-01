@@ -11,8 +11,8 @@
 - **Résultats** : `results/simulation/exp009_manual.csv`, `results/simulation/figures/exp009_camera_home.png`
 - **Code** : `src/rem_bench/`, `ros2_ws/src/rem_bench_sim/` ; tests `tests/unit_tests/test_rem_bench.py` ; guide `docs/guides/GAZEBO_BANC_REM.md`
 
-> **Mise à jour du 2026-10-01 — scène à refaire.** La description du banc d'après photos contredit
-> la scène simulée ici : caméra fixe côté cible et marqueur sur la plaque mobile, plateforme
+> **Mise à jour du 2026-10-01 — scène à refaire.** La description du banc d'après photos, confirmée par
+> le responsable du projet, contredit la scène simulée ici : caméra fixe sur le col de cygne, côté cible, et marqueur sur la plaque mobile, plateforme
 > couchée, rail d'approche, couple des vérins insuffisant. Restent valables : l'exécution du code
 > du banc sans modification, la fidélité du rendu ArUco, D1, D9, D13, D14 et la résolution du
 > firmware. L'analyse du mode automatique est à reprendre avec le bon montage. La suite se fait
@@ -25,7 +25,7 @@ Jumeau Gazebo du démonstrateur : caméra embarquée rendue, Arduino virtuel, et
 
 ## Contexte
 
-Le banc réel (hexapode de 7,5 cm / 4 cm, vérins de 10 cm, caméra USB embarquée sur la plateforme, marqueur ArUco 26, IMU MPU-9250, Arduino Mega) est piloté par le paquet ROS 2 `stewart_control`. Ses mouvements sont gelés : le support de la caméra est trop fragile. Les modes manuel et automatique ne sont donc plus testables sur le matériel. Le jumeau existant (PyBullet, URDF de 20 cm) décrit une autre plateforme et ne parle pas ROS.
+Le banc réel (hexapode de 7,5 cm / 4 cm, vérins de 10 cm, caméra USB (supposée ici embarquée sur la plateforme ; en réalité fixe, voir la mise à jour), marqueur ArUco 26, IMU MPU-9250, Arduino Mega) est piloté par le paquet ROS 2 `stewart_control`. Ses mouvements sont gelés : le support de la caméra est trop fragile. Les modes manuel et automatique ne sont donc plus testables sur le matériel. Le jumeau existant (PyBullet, URDF de 20 cm) décrit une autre plateforme et ne parle pas ROS.
 
 ## Verrou scientifique
 
@@ -101,7 +101,7 @@ H1, H2 et H3 sont validées. Le jumeau Gazebo exécute le logiciel réel du banc
 ## Travaux restants
 
 - Mesurer sur le banc les hypothèses de bench_rem.yaml : montage de la caméra, position du marqueur à l'alignement, vitesse des vérins, montage de l'IMU (`digital_twin_plan.md` §5, PROT-001). Recherche documentaire du 2026-10-01 : aucune de ces valeurs n'est consignée.
-- **Montage de la caméra : contradiction à lever.** Une réponse du 2026-10-01 indiquait une caméra embarquée sur la plateforme ; la description du banc d'après photos, du même jour, indique une caméra **fixe** (bras col de cygne, disque Space Lock côté cible), le marqueur 26 **sur la plaque mobile** et une plateforme **couchée** (normale horizontale, dans l'axe du rail), à environ 20 cm. La scène de cette fiche est donc à refaire (voir ci-dessous).
+- **Montage de la caméra : confirmé le 2026-10-01, caméra fixe sur le col de cygne** (disque Space Lock côté cible), marqueur 26 sur la plaque mobile, plateforme couchée (normale horizontale, dans l'axe du rail), à environ 20 cm. La scène simulée ici (caméra embarquée) est donc fausse, et l'hypothèse *eye-in-hand* écartée.
 - Firmware : `pwm_max` = 230 se trouve dans la zone où le banc signale un retour lent faute de couple (210 à 240). Modéliser l'asymétrie sortie/retour, et proposer au banc de borner le PWM à 200.
 - Rendre la distorsion de la caméra (`calib_int.npz`) et calibrer le bruit caméra et IMU sur des enregistrements du mode Acquisition.
 - Remonter D13 et D14 au dépôt du banc ; tester les corrections de D1, D2, D3 et la loi incrémentale dans le jumeau (critère de convergence en boucle fermée).

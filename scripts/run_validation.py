@@ -24,6 +24,7 @@ STEPS = [
     ("EXP-002 IK contre URDF", [sys.executable, 'scripts/experiments/exp002_ik_vs_urdf.py']),
     ("EXP-004 suivi en boucle fermée", [sys.executable, 'scripts/experiments/exp004_closed_loop_tracking.py']),
     ("EXP-007 espace de travail (course)", [sys.executable, 'scripts/experiments/exp007_workspace_stroke.py']),
+    ("EXP-008 cinématique directe", [sys.executable, 'scripts/experiments/exp008_forward_kinematics.py']),
 ]
 
 

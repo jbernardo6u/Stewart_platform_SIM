@@ -138,7 +138,7 @@ Cible : `models/geometry/` expose un objet `PlatformGeometry` immuable, construi
 | Contrôle en vitesse / accélération | aucun | `controllers/motion_control/` | ⬜ |
 | Asservissement des vérins | `src/hardware/motor_controller.py` (stub, P seul) | `controllers/servo_control/` | ⚠️ Stub ; interface banc prévue (ADR-0002) |
 | Contrôle inverse (pose → vérins) | `InverseKinematics` | `controllers/inverse_kinematics/` | ✅ |
-| Contrôle direct (vérins → pose) | aucun | `controllers/forward_kinematics/` | ⬜ |
+| Contrôle direct (vérins → pose) | `src/core/forward_kinematics.py` (FK, jacobien, singularités) | `controllers/forward_kinematics/` | ✅ EXP-008 |
 
 ## Niveau 6 : Validation
 

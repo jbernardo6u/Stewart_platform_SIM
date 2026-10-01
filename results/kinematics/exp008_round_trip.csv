@@ -1,0 +1,2 @@
+n,failures,max_err_um,max_err_urad,max_iterations,mean_iterations,ms_per_call,jacobian_fd_error
+2000,0,1.500473356674803e-06,1.0737188915754814e-05,7,4.8035,0.8241238095000085,2.699856727073069e-10

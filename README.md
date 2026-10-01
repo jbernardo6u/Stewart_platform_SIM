@@ -25,7 +25,7 @@ Le dépôt couvre la modélisation géométrique, cinématique et dynamique, la 
 |---|---|
 | 1 · Simulation | ✅ PyBullet en boucle fermée **validé : 0,28 mm / 0,044°** (EXP-004) ; Gazebo/ROS2 à créer |
 | 2 · Géométrie | ✅ Géométrie réelle identifiée dans le URDF (EXP-001) ; repères à formaliser |
-| 3 · Cinématique | 🟡 IK **validée contre le URDF** (EXP-002) ; espace de travail limité par la course (EXP-007) ; FK et jacobien à créer |
+| 3 · Cinématique | 🟡 IK **validée contre le URDF** (EXP-002) ; espace de travail limité par la course (EXP-007) ; **FK, jacobien et singularités** (EXP-008) |
 | 4 · Dynamique | ⬜ À créer |
 | 5 · Contrôle | 🟡 Scénarios à lois horaires d'ordre 5, vérification de la course, tableau de bord de pilotage ; limites vitesse/accélération à faire |
 | 6 · Validation | 🟡 51 tests automatisés (27 unitaires, 24 de validation), CI GitHub ; banc physique disponible, aucune mesure réelle encore |

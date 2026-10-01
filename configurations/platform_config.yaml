@@ -41,6 +41,12 @@ platform:
       pitch: [-30, 30]      # Limites en pitch (degrés)
       yaw: [-30, 30]        # Limites en yaw (degrés)
 
+# Cinématique directe (src/core/forward_kinematics.py, EXP-008)
+kinematics:
+  forward:
+    tolerance: 1.0e-12      # résidu visé sur les longueurs des vérins (m)
+    max_iterations: 50      # Newton-Raphson ; 7 au plus observées dans l'espace du tableau de bord
+
 # Configuration de simulation
 simulation:
   # Fichiers URDF

@@ -58,6 +58,7 @@ python3 scripts/experiments/exp001_urdf_geometry.py   # EXP-001 → results/geom
 python3 scripts/experiments/exp002_ik_vs_urdf.py      # EXP-002 → results/kinematics/
 python3 scripts/experiments/exp004_closed_loop_tracking.py  # EXP-004 → results/experiments/
 python3 scripts/experiments/exp007_workspace_stroke.py      # EXP-007 → results/kinematics/
+python3 scripts/experiments/exp008_forward_kinematics.py    # EXP-008 → results/kinematics/
 python3 scripts/run_validation.py                     # tests + toutes les campagnes, bilan
 python3 scripts/run_trajectory.py                     # scénarios en simulation DIRECT, erreurs de suivi
 python3 -m src.gui.dashboard                          # tableau de bord (CustomTkinter)
@@ -77,6 +78,7 @@ Diagnostic initial : `docs/reports/2026-09-24_analyse_depot.md` (daté, ne pas l
 - `PyBulletSimulator` (`src/simulation/pybullet_sim.py`, utilisé par la GUI PyBullet) délègue à `StewartPlatform.from_urdf` : ses poses sont en **mm / degrés relatifs à la position de travail**, et `update_platform_pose` ne fait que fixer les consignes (la simulation avance par `step_simulation`).
 - En mode GUI sous WSLg, `p.disconnect()` provoque un segfault (bogue PyBullet/OpenGL, reproduit sans modèle). Le tableau de bord utilise donc DIRECT + rendu hors écran (`PyBulletSimulator(offscreen=True)`, greffon EGL chargé **avant** les modèles) : ne pas le repasser en `p.GUI`.
 - Interfaces : `src/gui/dashboard.py` (vue) + `dashboard_controller.py` (logique testable sans affichage). Les classes `SimpleStewartGUI`, `AdvancedStewartGUI`, `PyBulletStewartGUI` sont dépréciées ; leurs `main()` ouvrent le tableau de bord.
+- Cinématique directe : `src.core.forward_kinematics` (**radians**, SI) ; `pose_from_actuator_positions` donne la pose relative à la position de travail à partir des allongements des vérins (codeurs du banc).
 - Faisabilité : toute trajectoire nouvelle passe par `src.core.feasibility.check_trajectory` (course des vérins) ; les scénarios de démonstration sont dans `src/core/scenarios.py`.
 
 Ne pas « corriger » ces points au détour d'une autre tâche : ils relèvent des Phases 2 et 4 de la roadmap et nécessitent une validation.

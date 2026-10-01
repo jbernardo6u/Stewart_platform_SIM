@@ -21,3 +21,4 @@ Règles :
 | [EXP-004](EXP-004-simulation-boucle-fermee.md) | Déblocage et validation de la simulation en boucle fermée | 4 | V-7, V-8 | ✅ Terminée : 0,28 mm / 0,044° |
 | EXP-005 | Même trajectoire sous PyBullet et Gazebo | 4 | V-7, V-8 | Planifiée |
 | [EXP-007](EXP-007-espace-travail-course.md) | Espace de travail limité par la course des vérins | 2 | V-3 | ✅ Terminée : course non limitante en x/y, lacet ±72° |
+| [EXP-008](EXP-008-cinematique-directe-jacobien.md) | Cinématique directe, jacobien et singularités | 2 | V-2, V-3, V-7 | ✅ Terminée : aller-retour 10⁻¹² m, 0,8 ms ; singularité à lacet ±90° |

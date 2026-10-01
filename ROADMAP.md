@@ -12,7 +12,7 @@ Le banc existe : les phases matérielles (6 et 7) ne sont plus un horizon lointa
    - Interface matériel réelle à la place du stub `MotorController` : lecture des codeurs, consigne de position, arrêt d'urgence, **même API que `PyBulletSimulator`**, pour que le tableau de bord pilote indifféremment la simulation ou le banc.
    - Protocole de mesure de pose (`docs/protocols/`) : moyen disponible (vision/ArUco, comparateurs, laser tracker ?) et incertitude.
    - ✅ Préparé : [PROT-001](docs/protocols/PROT-001-inventaire-banc.md) (grille d'inventaire à remplir) et [ADR-0002](docs/decisions/ADR-0002-interface-commune-simulation-banc.md) (contrat `PlatformBackend`, à valider).
-2. **Cinématique complète** (Phase 2, V-2, V-3) : FK Newton-Raphson, jacobien, singularités, espace de travail avec le débattement des cardans mesuré.
+2. **Cinématique complète** (Phase 2, V-2, V-3) : ✅ FK, jacobien, singularités (EXP-008) ; reste l'espace de travail avec le débattement des cardans mesuré.
 3. **Statique, dynamique, énergie** (Phase 3, V-4 à V-6) : efforts vérins `J⁻ᵀw` sous la charge du timon ; c'est la question de faisabilité de fond pour REM.
 4. **Commande temps réel** (Phase 5) : limites de vitesse et d'accélération, asservissement, puis ROS2 si imposé.
 5. **Calibration et validation simulation/réel** (Phases 6 et 7), dès que 1 est prêt.
@@ -44,14 +44,15 @@ Gazebo (Phase 4, EXP-005) n'est utile que si l'intégration ROS2/Gazebo est une 
 
 **Sortie** : écart géométrie modèle/URDF documenté, et modèle de référence < 0,5 mm (✅ géométrie identifiée : 0,008 mm en simulation sans gravité).
 
-## Phase 2 : Caractérisation cinématique 🟡
+## Phase 2 : Caractérisation cinématique 🟡 (critère de sortie atteint)
 
 - ✅ **Anomalie A1 arbitrée** ([EXP-002](docs/experiments/EXP-002-validation-ik-urdf.md)) : l'IK `src` est correcte ; l'ordre des actionneurs est corrigé en `[2, 31, 45, 38, 24, 9]`
 - ✅ Ordre des arguments de `PhysicalStewartPlatform` corrigé (A2)
 - ✅ Docstrings d'unités et de convention de rotation (A6)
-- Cinématique directe (Newton-Raphson), jacobien, détection des singularités
+- ✅ Cinématique directe (Newton-Raphson sur SO(3)), jacobien, indicateurs de singularité : `src/core/forward_kinematics.py` ([EXP-008](docs/experiments/EXP-008-cinematique-directe-jacobien.md) : aller-retour 10⁻¹² m, 0,8 ms, 7 itérations au plus ; singularité de Fichter à lacet ±90°, conditionnement ≤ 7 sur le lacet ±60°)
+- ⬜ Recherche de singularités sur tout l'espace 6D ; seuil de conditionnement dans `check_trajectory` (après la Phase 3)
 - 🟡 Espace de travail atteignable : course des vérins faite ([EXP-007](docs/experiments/EXP-007-espace-travail-course.md) : non limitante en x/y, lacet ±72°) ; débattement des cardans à mesurer sur le banc
-- Tests : aller-retour IK→FK, valeurs de référence, propriétés de symétrie
+- ✅ Tests : aller-retour IK→FK, différences finies, singularité de référence, symétrie, FK sur les joints PyBullet (`test_forward_kinematics*.py`)
 
 **Sortie** : erreur aller-retour IK→FK < 1 µm ; IK validée contre PyBullet < 0,1 mm (EXP-002).
 

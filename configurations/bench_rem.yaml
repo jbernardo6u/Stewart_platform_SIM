@@ -44,8 +44,13 @@ actuators:
   pwm_per_cm: 35.0              # pwmCible = pwm_min + 35·|erreur(cm)|
   loop_period_s: 0.02           # delay(20) + envoi du retour à chaque boucle
   ready_message: "Arduino connecte via USB - Pret"
-  # HYPOTHÈSE : vitesse d'un vérin à PWM 255 (proportionnelle au PWM). À mesurer.
-  speed_cm_s_at_full_pwm: 2.0
+  # ESTIMATION (non mesurée) : vitesse d'un vérin à PWM 255, en la supposant proportionnelle au PWM.
+  # Essai d'endurance à PWM 150, à vide : 382 allers-retours en 30 min. Sur toute la course
+  # (2 × 10 cm), cela fait ≈ 4,2 cm/s en moyenne, soit 4,2 × 255/150 ≈ 7,1 cm/s à PWM 255.
+  # C'est une borne basse : la moyenne inclut les arrêts et les inversions, et la course
+  # réellement parcourue n'est pas consignée. Le banc signale aussi une plage utile de PWM
+  # de 100 à 200 (retour lent de 210 à 240, blocage au retour à 255), non modélisée ici.
+  speed_cm_s_at_full_pwm: 7.1
 
 # --- Caméra (banc : capteur et intrinsèques ; HYPOTHÈSE : montage) ---
 camera:

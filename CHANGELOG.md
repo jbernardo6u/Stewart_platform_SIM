@@ -10,6 +10,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - `ros2_ws/src/rem_bench_sim` : nœuds `virtual_hardware`, `sim_aruco` (`aruco_node` du banc sur l'image Gazebo), `sim_imu` (`imu_node` du banc sur un MPU-9250 simulé), `exp009_campaign` ; `bench_sim.launch.py` (modes acquisition, manuel, automatique).
 - `configurations/bench_rem.yaml` : mécanisme et capteurs du banc, hypothèses de montage signalées.
 - [EXP-009](docs/experiments/EXP-009-jumeau-gazebo-demonstrateur.md) : D1 (IK du banc : x, y et lacet inversés) et D9 reproduits et chiffrés ; nouveaux défauts du banc D13 (lissage puis zone morte dans `aruco_node` : jusqu'à 6,8 mm d'erreur statique) et D14 (OpenCV 4.6 : `DetectorParameters()` provoque une erreur de segmentation) ; mode automatique inopérant avec `reference_position_m: [0, 0, 0]`.
+- `bench_rem.yaml` : vitesse des vérins portée de 2 à 7,1 cm/s à PWM 255, estimée d'après l'essai d'endurance du banc (borne basse, non mesurée).
 - Guide [docs/guides/GAZEBO_BANC_REM.md](docs/guides/GAZEBO_BANC_REM.md) ; 23 tests unitaires (`tests/unit_tests/test_rem_bench.py`).
 
 ### Modifié (2026-10-01)

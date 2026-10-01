@@ -42,7 +42,7 @@ Valider en simulation le **logiciel réel** du banc, et non une réécriture : l
 
 - Mécanisme : géométrie du banc (`stewart_params.yaml`) avec les **vraies** attaches (base = grand cercle, conforme au schéma `stewart_hexapod_motor_layout.png`). Gazebo est cinématique : les poses des corps sont imposées à 50 Hz (`set_pose_vector`) depuis la FK (EXP-008).
 - Étalonnage simulé : `reference_orientation_deg` de la caméra et de l'IMU recalculées pour le montage simulé (orientation publiée nulle à home, comme après l'étalonnage du banc) ; `reference_position_m` conservée telle quelle (`[0, 0, 0]`).
-- **Hypothèses non mesurées** (bench_rem.yaml) : caméra au bord +x de la plateforme (5 cm du centre, 2 cm au-dessus), axe optique horizontal ; marqueur à 30 cm devant ; vitesse des vérins 2 cm/s à PWM 255 ; IMU alignée sur la plateforme.
+- **Hypothèses non mesurées** (bench_rem.yaml) : caméra au bord +x de la plateforme (5 cm du centre, 2 cm au-dessus), axe optique horizontal ; marqueur à 30 cm devant ; IMU alignée sur la plateforme. Vitesse des vérins : 2 cm/s à PWM 255 lors de la campagne, puis 7,1 cm/s, estimée d'après l'essai d'endurance du banc (borne basse, non mesurée). Les résultats statiques ne dépendent pas de cette vitesse, car chaque consigne a 12 s pour se stabiliser.
 - Mesures : acquisition à home (image, ArUco/vérité), puis 9 consignes manuelles envoyées comme l'interface (`/manual_position` en cm, `/manual_orientation` en °), 12 s de stabilisation chacune (`ros2 run rem_bench_sim exp009_campaign`). Pose atteinte = FK des codeurs simulés, comparée à la consigne ; position ArUco comparée à la vérité.
 - Séparation des causes : calcul hors ROS de la pose atteinte avec l'IK du banc (D1) puis avec l'IK corrigée, sans le firmware.
 
@@ -92,7 +92,9 @@ H1, H2 et H3 sont validées. Le jumeau Gazebo exécute le logiciel réel du banc
 
 ## Travaux restants
 
-- Mesurer sur le banc les hypothèses de bench_rem.yaml : montage de la caméra, position du marqueur à l'alignement, vitesse des vérins, montage de l'IMU (`digital_twin_plan.md` §5, PROT-001).
+- Mesurer sur le banc les hypothèses de bench_rem.yaml : montage de la caméra, position du marqueur à l'alignement, vitesse des vérins, montage de l'IMU (`digital_twin_plan.md` §5, PROT-001). Recherche documentaire du 2026-10-01 : aucune de ces valeurs n'est consignée.
+- **Montage de la caméra à confirmer** : les documents décrivent une caméra tenue par un bras articulé, face à la zone de capture, avec la caméra et le marqueur sur deux supports circulaires distincts. Le jumeau suit l'ADR-0002 du banc (2026-09-24), qui parle d'une caméra embarquée sur la plateforme. `calib_ext3.npz` (date inconnue) donne une caméra à environ 50 cm de son repère de référence, inclinée d'environ 37° (rotation de 143° autour de x).
+- Firmware : `pwm_max` = 230 se trouve dans la zone où le banc signale un retour lent faute de couple (210 à 240). Modéliser l'asymétrie sortie/retour, et proposer au banc de borner le PWM à 200.
 - Rendre la distorsion de la caméra (`calib_int.npz`) et calibrer le bruit caméra et IMU sur des enregistrements du mode Acquisition.
 - Remonter D13 et D14 au dépôt du banc ; tester les corrections de D1, D2, D3 et la loi incrémentale dans le jumeau (critère de convergence en boucle fermée).
 - Tests d'intégration ROS 2 automatisés (`launch_testing`) et CI Jazzy, sur le modèle de celle du banc.
